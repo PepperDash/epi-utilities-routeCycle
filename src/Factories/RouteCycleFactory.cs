@@ -2,8 +2,11 @@
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using Crestron.SimplSharpPro.UI;
+using RouteCycle.JoinMaps;
+using RouteCycle.Devices;
+using RouteCycle.Config;
 
-namespace EssentialsPluginTemplate
+namespace RouteCycle.Factories
 {
 	/// <summary>
 	/// Plugin device factory for devices that use IBasicCommunication
@@ -14,7 +17,7 @@ namespace EssentialsPluginTemplate
 	/// <example>
 	/// "EssentialsPluginFactoryTemplate" renamed to "MyDeviceFactory"
 	/// </example>
-    public class EssentialsPluginTemplateFactory : EssentialsPluginDeviceFactory<EssentialsPluginTemplateDevice>
+    public class EssentialsPluginTemplateFactory : EssentialsPluginDeviceFactory<RouteCycleDevice>
     {
 		/// <summary>
 		/// Plugin device factory constructor
@@ -75,7 +78,7 @@ namespace EssentialsPluginTemplate
             }
             else
             {
-                return new EssentialsPluginTemplateDevice(dc.Key, dc.Name, propertiesConfig, comms);
+                return new RouteCycleDevice(dc.Key, dc.Name, propertiesConfig, comms);
             }
 
         }

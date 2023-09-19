@@ -1,6 +1,6 @@
 ﻿using PepperDash.Essentials.Core;
 
-namespace EssentialsPluginTemplate
+namespace RouteCycle.JoinMaps
 {
 	/// <summary>
 	/// Plugin device Bridge Join Map

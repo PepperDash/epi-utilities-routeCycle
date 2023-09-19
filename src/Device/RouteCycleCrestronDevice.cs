@@ -1,13 +1,12 @@
-﻿// For Basic SIMPL# Classes
-// For Basic SIMPL#Pro classes
-
-using Crestron.SimplSharpPro.DeviceSupport;
+﻿using Crestron.SimplSharpPro.DeviceSupport;
 using Crestron.SimplSharpPro;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
+using RouteCycle.Config;
+using RouteCycle.JoinMaps;
 
-namespace EssentialsPluginTemplate
+namespace RouteCycle.Factories
 {
 	/// <summary>
 	/// Plugin device

@@ -1,14 +1,14 @@
-﻿// For Basic SIMPL# Classes
-// For Basic SIMPL#Pro classes
-
-using Crestron.SimplSharpPro.DeviceSupport;
+﻿using Crestron.SimplSharpPro.DeviceSupport;
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using PepperDash.Essentials.Core.Queues;
+using PepperDash.Essentials.Core.DeviceInfo;
+using RouteCycle.Config;
+using RouteCycle.JoinMaps;
 
 
-namespace EssentialsPluginTemplate
+namespace RouteCycle.Devices
 {
 	/// <summary>
 	/// Plugin device template for third party devices that use IBasicCommunication
@@ -19,7 +19,7 @@ namespace EssentialsPluginTemplate
 	/// <example>
 	/// "EssentialsPluginDeviceTemplate" renamed to "SamsungMdcDevice"
 	/// </example>
-	public class EssentialsPluginTemplateDevice : EssentialsBridgeableDevice
+	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
         /// <summary>
         /// It is often desirable to store the config
@@ -37,20 +37,10 @@ namespace EssentialsPluginTemplate
 		private readonly IBasicCommunication _comms;
 		private readonly GenericCommunicationMonitor _commsMonitor;
 
-		// _comms gather for ASCII based API's
-		// TODO [ ] If not using an ASCII based API, delete the properties below
-		private readonly CommunicationGather _commsGather;
-
         /// <summary>
         /// Set this value to that of the delimiter used by the API (if applicable)
         /// </summary>
 		private const string CommsDelimiter = "\r";
-
-		// _comms byte buffer for HEX/byte based API's
-		// TODO [ ] If not using an HEX/byte based API, delete the properties below
-		private byte[] _commsByteBuffer = { };
-
-
 
 		/// <summary>
 		/// Connects/disconnects the comms of the plugin device
@@ -98,7 +88,7 @@ namespace EssentialsPluginTemplate
 		/// <param name="name"></param>
 		/// <param name="config"></param>
 		/// <param name="comms"></param>
-        public EssentialsPluginTemplateDevice(string key, string name, EssentialsPluginTemplateConfigObject config, IBasicCommunication comms)
+        public RouteCycleDevice(string key, string name, EssentialsPluginTemplateConfigObject config, IBasicCommunication comms)
 			: base(key, name)
 		{
 			Debug.Console(0, this, "Constructing new {0} instance", name);
@@ -123,25 +113,6 @@ namespace EssentialsPluginTemplate
 				socket.ConnectionChange += socket_ConnectionChange;
 				Connect = true;
             }
-
-            #region Communication data event handlers.  Comment out any that don't apply to the API type
-
-            // Only one of the below handlers should be necessary.  
-
-            // _comms gather for any API that has a defined delimiter
-			// TODO [ ] If not using an ASCII based API, remove the line below
-			_commsGather = new CommunicationGather(_comms, CommsDelimiter);
-			_commsGather.LineReceived += Handle_LineRecieved;
-
-			// _comms byte buffer for HEX/byte based API's with no delimiter
-            // TODO [ ] If not using an HEX/byte based API, remove the line below
-			_comms.BytesReceived += Handle_BytesReceived;
-
-            // _comms byte buffer for HEX/byte based API's with no delimiter
-            // TODO [ ] If not using an HEX/byte based API, remove the line below
-            _comms.TextReceived += Handle_TextReceived;
-
-            #endregion
         }
 
 

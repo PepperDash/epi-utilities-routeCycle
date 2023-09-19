@@ -2,8 +2,10 @@
 using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
+using RouteCycle.Config;
+using RouteCycle.JoinMaps;
 
-namespace EssentialsPluginTemplate
+namespace RouteCycle.Factories
 {
 	/// <summary>
 	/// Plugin device template for logic devices that don't communicate outside the program
