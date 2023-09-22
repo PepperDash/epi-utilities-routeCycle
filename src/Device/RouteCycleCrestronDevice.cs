@@ -40,7 +40,7 @@ namespace RouteCycle.Factories
 
             // The base class takes care of registering the hardware device for you
 
-            // TODO [ ] Update the constructor as needed for the plugin device being developed
+            // TODO [x] Update the constructor as needed for the plugin device being developed
 
             _config = config;
         }
@@ -77,7 +77,7 @@ namespace RouteCycle.Factories
             Debug.Console(1, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
             Debug.Console(0, "Linking to Bridge Type {0}", GetType().Name);
 
-            // TODO [ ] Implement bridge links as needed
+            // TODO [x] Implement bridge links as needed
 
             // links to bridge
             trilist.SetString(joinMap.DeviceName.JoinNumber, Name);

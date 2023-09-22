@@ -26,60 +26,9 @@ namespace RouteCycle.Devices
         /// </summary>
         private EssentialsPluginTemplateConfigObject _config;
 
-        /// <summary>
-        /// Provides a queue and dedicated worker thread for processing feedback messages from a device.
-        /// </summary>
-        private GenericQueue ReceiveQueue;
-
         #region IBasicCommunication Properties and Constructor.  Remove if not needed.
 
-        // TODO [ ] Add, modify, remove properties and fields as needed for the plugin being developed
-		private readonly IBasicCommunication _comms;
-		private readonly GenericCommunicationMonitor _commsMonitor;
-
-        /// <summary>
-        /// Set this value to that of the delimiter used by the API (if applicable)
-        /// </summary>
-		private const string CommsDelimiter = "\r";
-
-		/// <summary>
-		/// Connects/disconnects the comms of the plugin device
-		/// </summary>
-		/// <remarks>
-		/// triggers the _comms.Connect/Disconnect as well as thee comms monitor start/stop
-		/// </remarks>
-		public bool Connect
-		{
-			get { return _comms.IsConnected; }
-			set
-			{
-				if (value)
-				{
-					_comms.Connect();
-					_commsMonitor.Start();
-				}
-				else
-				{
-					_comms.Disconnect();
-					_commsMonitor.Stop();
-				}
-			}
-		}
-
-		/// <summary>
-		/// Reports connect feedback through the bridge
-		/// </summary>
-		public BoolFeedback ConnectFeedback { get; private set; }
-
-		/// <summary>
-		/// Reports online feedback through the bridge
-		/// </summary>
-		public BoolFeedback OnlineFeedback { get; private set; }
-
-		/// <summary>
-		/// Reports socket status feedback through the bridge
-		/// </summary>
-		public IntFeedback StatusFeedback { get; private set; }
+        // TODO [x] Add, modify, remove properties and fields as needed for the plugin being developed
 
 		/// <summary>
 		/// Plugin device constructor for devices that need IBasicCommunication
@@ -92,115 +41,8 @@ namespace RouteCycle.Devices
 			: base(key, name)
 		{
 			Debug.Console(0, this, "Constructing new {0} instance", name);
-
-			// TODO [ ] Update the constructor as needed for the plugin device being developed
-
 			_config = config;
-
-            ReceiveQueue = new GenericQueue(key + "-rxqueue");  // If you need to set the thread priority, use one of the available overloaded constructors.
-
-			ConnectFeedback = new BoolFeedback(() => Connect);
-			OnlineFeedback = new BoolFeedback(() => _commsMonitor.IsOnline);
-			StatusFeedback = new IntFeedback(() => (int)_commsMonitor.Status);
-
-			_comms = comms;
-			_commsMonitor = new GenericCommunicationMonitor(this, _comms, _config.PollTimeMs, _config.WarningTimeoutMs, _config.ErrorTimeoutMs, Poll);
-
-			var socket = _comms as ISocketStatus;
-			if (socket != null)
-			{
-				// device comms is IP **ELSE** device comms is RS232
-				socket.ConnectionChange += socket_ConnectionChange;
-				Connect = true;
-            }
         }
-
-
-		private void socket_ConnectionChange(object sender, GenericSocketStatusChageEventArgs args)
-		{
-			if (ConnectFeedback != null)
-				ConnectFeedback.FireUpdate();
-
-			if (StatusFeedback != null)
-				StatusFeedback.FireUpdate();
-		}
-
-		// TODO [ ] If not using an API with a delimeter, delete the method below
-		private void Handle_LineRecieved(object sender, GenericCommMethodReceiveTextArgs args)
-		{
-			// TODO [ ] Implement method 
-			
-            // Enqueues the message to be processed in a dedicated thread, but the specified method
-            ReceiveQueue.Enqueue(new ProcessStringMessage(args.Text, ProcessFeedbackMessage));
-		}
-
-        // TODO [ ] If not using an HEX/byte based API with no delimeter,  delete the method below
-		private void Handle_BytesReceived(object sender, GenericCommMethodReceiveBytesArgs args)
-		{
-			// TODO [ ] Implement method 
-			throw new System.NotImplementedException();
-		}
-
-        // TODO [ ] If not using an ASCII based API with no delimeter, delete the method below
-        void Handle_TextReceived(object sender, GenericCommMethodReceiveTextArgs e)
-        {
-            // TODO [ ] Implement method 
-            throw new System.NotImplementedException();
-        }
-
-        /// <summary>
-        /// This method should perform any necessary parsing of feedback messages from the device
-        /// </summary>
-        /// <param name="message"></param>
-        void ProcessFeedbackMessage(string message)
-        {
-
-        }
-
-
-		// TODO [ ] If not using an ACII based API, delete the properties below
-		/// <summary>
-		/// Sends text to the device plugin comms
-		/// </summary>
-		/// <remarks>
-		/// Can be used to test commands with the device plugin using the DEVPROPS and DEVJSON console commands
-		/// </remarks>
-		/// <param name="text">Command to be sent</param>		
-		public void SendText(string text)
-		{
-			if (string.IsNullOrEmpty(text)) return;
-
-			_comms.SendText(string.Format("{0}{1}", text, CommsDelimiter));
-		}
-
-		// TODO [ ] If not using an HEX/byte based API, delete the properties below
-		/// <summary>
-		/// Sends bytes to the device plugin comms
-		/// </summary>
-		/// <remarks>
-		/// Can be used to test commands with the device plugin using the DEVPROPS and DEVJSON console commands
-		/// </remarks>
-		/// <param name="bytes">Bytes to be sent</param>		
-		public void SendBytes(byte[] bytes)
-		{
-			if (bytes == null) return;
-
-			_comms.SendBytes(bytes);
-		}
-
-		/// <summary>
-		/// Polls the device
-		/// </summary>
-		/// <remarks>
-		/// Poll method is used by the communication monitor.  Update the poll method as needed for the plugin being developed
-		/// </remarks>
-		public void Poll()
-		{
-			// TODO [ ] Update Poll method as needed for the plugin being developed
-            // Example: SendText("getstatus");
-			throw new System.NotImplementedException();
-        }
-
         #endregion
 
 
@@ -233,38 +75,18 @@ namespace RouteCycle.Devices
             Debug.Console(1, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
             Debug.Console(0, "Linking to Bridge Type {0}", GetType().Name);
 
-            // TODO [ ] Implement bridge links as needed
+            // TODO [x] Implement bridge links as needed
 
             // links to bridge
             trilist.SetString(joinMap.DeviceName.JoinNumber, Name);
 
-            trilist.SetBoolSigAction(joinMap.Connect.JoinNumber, sig => Connect = sig);
-            ConnectFeedback.LinkInputSig(trilist.BooleanInput[joinMap.Connect.JoinNumber]);
+            //trilist.SetBoolSigAction(joinMap.Connect.JoinNumber, sig => Connect = sig);
+            //ConnectFeedback.LinkInputSig(trilist.BooleanInput[joinMap.Connect.JoinNumber]);
 
-            StatusFeedback.LinkInputSig(trilist.UShortInput[joinMap.Status.JoinNumber]);
-            OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
-
-            UpdateFeedbacks();
-
-            trilist.OnlineStatusChange += (o, a) =>
-            {
-                if (!a.DeviceOnLine) return;
-
-                trilist.SetString(joinMap.DeviceName.JoinNumber, Name);
-                UpdateFeedbacks();
-            };
+            //StatusFeedback.LinkInputSig(trilist.UShortInput[joinMap.Status.JoinNumber]);
+            //OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
         }
-
-        private void UpdateFeedbacks()
-        {
-            // TODO [ ] Update as needed for the plugin being developed
-            ConnectFeedback.FireUpdate();
-            OnlineFeedback.FireUpdate();
-            StatusFeedback.FireUpdate();
-        }
-
         #endregion
-
     }
 }
 
