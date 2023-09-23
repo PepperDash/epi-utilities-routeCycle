@@ -56,3 +56,95 @@ In the solution folder is a file named "PDT.EssentialsPluginTemplate.nuspec"
 There is no longer a requirement to adjust workflow files for nuget generation for private and public repositories.  This is now handled automatically in the workflow.
 
 __If you do not make these changes to the nuspec file, the project will not generate a nuget package__
+
+### Plugin Configuration Object
+
+Update the configuration object as needed for the plugin being developed.
+
+```json
+{
+	"devices": [
+		{
+			"key": "essentialsPluginKey",
+			"name": "Essentials Plugin Name",
+			"type": "essentialsPluginTypeName",
+			"group": "pluginDevices",
+			"properties": {
+				"pluginCollection": {
+					"item1": {
+						"name": "Item 1",
+						"value": 1
+					},
+					"item2": {
+						"name": "Item 2",
+						"value": 2
+					}
+				}
+			}
+		}		
+	]
+}
+```
+
+### Plugin Bridge Configuration Object
+
+Update the bridge configuration object as needed for the plugin being developed.
+
+```json
+{
+	"devices": [
+		{
+			"key": "essentialsPluginBridgeKey",
+			"name": "Essentials Plugin Bridge Name",
+			"group": "api",
+			"type": "eiscApiAdvanced",
+			"properties": {
+				"control": {
+					"ipid": "1A",
+					"tcpSshProperties": {
+						"address": "127.0.0.2",
+						"port": 0
+					}
+				},
+				"devices": [
+					{
+						"deviceKey": "essentialsPluginKey",
+						"joinStart": 1
+					}
+				]
+			}
+		}
+	]
+}
+```
+
+### SiMPL EISC Bridge Map
+
+The selection below documents the digital, analog, and serial joins used by the SiMPL EISC. Update the bridge join maps as needed for the plugin being developed.
+
+#### Digitals
+| dig-o (Input/Triggers)                | I/O | dig-i (Feedback) |
+|---------------------------------------|-----|------------------|
+|                                       | 1   | Is Online        |
+| Connect (Held) / Disconnect (Release) | 2   | Connected        |
+|                                       | 3   |                  |
+|                                       | 4   |                  |
+|                                       | 5   |                  |
+#### Analogs
+| an_o (Input/Triggers) | I/O | an_i (Feedback) |
+|-----------------------|-----|-----------------|
+|                       | 1   | Socket Status   |
+|                       | 2   | Monitor Status  |
+|                       | 3   |                 |
+|                       | 4   |                 |
+|                       | 5   |                 |
+
+
+#### Serials
+| serial-o (Input/Triggers) | I/O | serial-i (Feedback) |
+|---------------------------|-----|---------------------|
+|                           | 1   | Device Name         |
+|                           | 2   |                     |
+|                           | 3   |                     |
+|                           | 4   |                     |
+|                           | 5   |                     |
