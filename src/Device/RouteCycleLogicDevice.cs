@@ -10,18 +10,12 @@ namespace RouteCycle.Factories
 	/// <summary>
 	/// Plugin device template for logic devices that don't communicate outside the program
 	/// </summary>
-	/// <remarks>
-	/// Rename the class to match the device plugin being developed.
-	/// </remarks>
-	/// <example>
-    /// "EssentialsPluginTemplateLogicDevice" renamed to "SamsungMdcDevice"
-	/// </example>
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
         /// <summary>
         /// It is often desirable to store the config
         /// </summary>
-        private EssentialsPluginTemplateConfigObject _config;
+        private RouteCycleConfigObject _config;
 
         /// <summary>
         /// Plugin device constructor
@@ -29,13 +23,10 @@ namespace RouteCycle.Factories
         /// <param name="key"></param>
         /// <param name="name"></param>
         /// <param name="config"></param>
-        public RouteCycleDevice(string key, string name, EssentialsPluginTemplateConfigObject config)
+        public RouteCycleDevice(string key, string name, RouteCycleConfigObject config)
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
-
-            // TODO [x] Update the constructor as needed for the plugin device being developed
-
             _config = config;
         }
 
@@ -67,8 +58,6 @@ namespace RouteCycle.Factories
 
             Debug.Console(1, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
             Debug.Console(0, "Linking to Bridge Type {0}", GetType().Name);
-
-            // TODO [x] Implement bridge links as needed
 
             // links to bridge
             trilist.SetString(joinMap.DeviceName.JoinNumber, Name);

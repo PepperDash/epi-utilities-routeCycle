@@ -14,13 +14,12 @@ namespace RouteCycle.Config
 	/// "EssentialsPluginConfigObjectTemplate" renamed to "SamsungMdcConfig"
 	/// </example>
 	[ConfigSnippet("\"properties\":{\"control\":{}")]
-	public class EssentialsPluginTemplateConfigObject
+	public class RouteCycleConfigObject
 	{
 		/// <summary>
 		/// Example dictionary of objects
 		/// </summary>
 		/// <remarks>
-		/// This is an example collection configuration object.  This should be modified or deleted as needed for the plugin being built.
 		/// </remarks>
 		/// <example>
 		/// <code>
@@ -45,7 +44,7 @@ namespace RouteCycle.Config
 		/// </code>
 		/// </example>
 		[JsonProperty("DeviceDictionary")]
-		public Dictionary<string, EssentialsPluginTemplateConfigObjectDictionary> DeviceDictionary { get; set; }
+		public Dictionary<string, RouteCycleConfigObjectDictionary> DeviceDictionary { get; set; }
 
 		/// <summary>
 		/// Constuctor
@@ -54,9 +53,9 @@ namespace RouteCycle.Config
 		/// If using a collection you must instantiate the collection in the constructor
 		/// to avoid exceptions when reading the configuration file 
 		/// </remarks>
-        public EssentialsPluginTemplateConfigObject()
+        public RouteCycleConfigObject()
 		{
-			DeviceDictionary = new Dictionary<string, EssentialsPluginTemplateConfigObjectDictionary>();
+			DeviceDictionary = new Dictionary<string, RouteCycleConfigObjectDictionary>();
 		}
 	}
 
@@ -64,7 +63,6 @@ namespace RouteCycle.Config
 	/// Example plugin configuration dictionary object
 	/// </summary>
 	/// <remarks>
-	/// This is an example collection of configuration objects.  This can be modified or deleted as needed for the plugin being built.
 	/// </remarks>
 	/// <example>
 	/// <code>
@@ -78,13 +76,12 @@ namespace RouteCycle.Config
 	/// }
 	/// </code>
 	/// </example>
-	public class EssentialsPluginTemplateConfigObjectDictionary
+	public class RouteCycleConfigObjectDictionary
 	{
 		/// <summary>
 		/// Serializes collection name property
 		/// </summary>
 		/// <remarks>
-		/// This is an example collection of configuration objects.  This can be modified or deleted as needed for the plugin being built.
 		/// </remarks>
 		[JsonProperty("name")]
 		public string Name { get; set; }
@@ -93,7 +90,6 @@ namespace RouteCycle.Config
 		/// Serializes collection value property
 		/// </summary>
 		/// <remarks>
-		/// This is an example collection of configuration objects.  This can be modified or deleted as needed for the plugin being built.
 		/// </remarks>
 		[JsonProperty("value")]
 		public uint Value { get; set; }
