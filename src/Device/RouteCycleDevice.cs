@@ -19,6 +19,8 @@ namespace RouteCycle.Factories
         /// It is often desirable to store the config
         /// </summary>
         private RouteCycleConfigObject _config;
+        private CTimer shiftTimer;
+        private List<OutputFeedback> outputFeedbacks = new List<OutputFeedback>();
 
         /// <summary>
         /// Plugin device constructor
@@ -31,8 +33,26 @@ namespace RouteCycle.Factories
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
             _config = config;
-        }
+            
+            //Initialize your timer here and set interval
+            shiftTimer = new CTimer(shiftTimer_Elapsed, 5000);  // 5000 ms = 5 seconds
+            //CTimer initilizes right way, trigger method to stop timer if running
+            SetTimerEnabled(false);
 
+            // Initialize the OutputFeedbacks collection
+            for (ushort i = 0; i < 32; i++)
+            {
+                outputFeedbacks.Add(new OutputFeedback
+                {
+                    Index = i,
+                    IndexEnabled = false,
+                    IndexValue = 0,
+                    IndexLabel = ("Index {i}"),
+                    ShiftedIndex = 0,
+                    ShiftedIndexValue = 0
+                });
+            }
+        }
         #region Overrides of EssentialsBridgeableDevice
 
         /// <summary>
@@ -72,43 +92,9 @@ namespace RouteCycle.Factories
             };
         }
         #endregion
-    }
+        #region customDeviceLogic
 
-    public class OutputFeedback
-    {
-        public ushort Index { get; set; }
-        public bool IndexEnabled { get; set; }
-        public ushort IndexValue { get; set; }
-        public string IndexLabel { get; set; }
-        public ushort ShiftedIndex { get; set; }
-        public ushort ShiftedIndexValue { get; set; }
-    }
-
-    public class MyPluginBridgeEpi
-    {
-        private CTimer shiftTimer;
-        private List<OutputFeedback> outputFeedbacks = new List<OutputFeedback>();
-
-        //Initialize your timer here and set interval
-        //shiftTimer = new Timer(1000); // 1000 ms = 1 second
-        shiftTimer = new CTimer(ShiftTimer_Elapsed, null, 1000, 1000);  // 1000 ms = 1 second
-        shiftTimer.Elapsed += ShiftTimer_Elapsed;
-
-        // Initialize the OutputFeedbacks collection here
-        for (ushort i = 0; i < 32; i++)
-        {
-            outputFeedbacks.Add(new OutputFeedback
-            {
-                Index = i,
-                IndexEnabled = false,
-                IndexValue = 0,
-                IndexLabel = $"Index {i}",
-                ShiftedIndex = 0,
-                ShiftedIndexValue = 0
-            });
-        }
-        
-        private void ShiftTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private void shiftTimer_Elapsed(object sender)
         {
             // First loop
             for (int i = 0; i < outputFeedbacks.Count - 1; i++)
@@ -137,16 +123,25 @@ namespace RouteCycle.Factories
         public void SetTimerEnabled(bool enabled)
         {
             if (enabled)
-                shiftTimer.Start();
+                shiftTimer.Reset(1000);  // Reset and restart the timer
             else
-                shiftTimer.Stop();
+                shiftTimer.Stop();  // Stop the timer
         }
 
+        /// <summary>
+        /// Retuns object at specific index containing three params within single object called OutputFeedback
+        /// </summary>
+        /// <param name="index">Index of OutputFeedback</param>
+        /// <returns></returns>
         public OutputFeedback GetOutputFeedback(int index)
         {
             return outputFeedbacks[index];
         }
 
+        /// <summary>
+        /// Manually set OutputFeedback, requires full OutputFeedback object w/ three params
+        /// </summary>
+        /// <param name="feedback">Complex object w/ bool IndexEnabled, ushort IndexValue, string IndexLabel</param>
         public void SetOutputFeedback(OutputFeedback feedback)
         {
             var item = outputFeedbacks[feedback.Index];
@@ -154,7 +149,20 @@ namespace RouteCycle.Factories
             item.IndexValue = feedback.IndexValue;
             item.IndexLabel = feedback.IndexLabel;
         }
+        #endregion
+    }
 
+    /// <summary>
+    /// OutputFeedback custom object to define array of outputs on bridge
+    /// </summary>
+    public class OutputFeedback
+    {
+        public ushort Index { get; set; }
+        public bool IndexEnabled { get; set; }
+        public ushort IndexValue { get; set; }
+        public string IndexLabel { get; set; }
+        public ushort ShiftedIndex { get; set; }
+        public ushort ShiftedIndexValue { get; set; }
     }
 }
 
