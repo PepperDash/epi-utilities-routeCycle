@@ -100,12 +100,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Device\RouteCycleLogicDevice.cs" />
-    <Compile Include="Device\RouteCycleCrestronDevice.cs" />
     <Compile Include="JoinMaps\RouteCycleBaseJoinMap.cs" />
     <Compile Include="Config\RouteCycleConfigObject.cs" />
     <Compile Include="Factories\RouteCycleFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Device\RouteCycleDevice.cs" />
     <None Include="Properties\ControlSystem.cfg" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CompactFramework.CSharp.targets" />

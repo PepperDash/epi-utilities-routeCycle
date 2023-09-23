@@ -16,7 +16,7 @@ namespace RouteCycle.Factories
 	/// <example>
     /// "EssentialsPluginTemplateLogicDevice" renamed to "SamsungMdcDevice"
 	/// </example>
-	public class EssentialsPluginTemplateLogicDevice : EssentialsBridgeableDevice
+	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
         /// <summary>
         /// It is often desirable to store the config
@@ -29,7 +29,7 @@ namespace RouteCycle.Factories
         /// <param name="key"></param>
         /// <param name="name"></param>
         /// <param name="config"></param>
-        public EssentialsPluginTemplateLogicDevice(string key, string name, EssentialsPluginTemplateConfigObject config)
+        public RouteCycleDevice(string key, string name, EssentialsPluginTemplateConfigObject config)
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
@@ -50,7 +50,7 @@ namespace RouteCycle.Factories
         /// <param name="bridge"></param>
         public override void LinkToApi(BasicTriList trilist, uint joinStart, string joinMapKey, EiscApiAdvanced bridge)
         {
-            var joinMap = new EssentialsPluginTemplateBridgeJoinMap(joinStart);
+            var joinMap = new RouteCycleBridgeJoinMap(joinStart);
 
             // This adds the join map to the collection on the bridge
             if (bridge != null)
@@ -76,13 +76,10 @@ namespace RouteCycle.Factories
             trilist.OnlineStatusChange += (o, a) =>
             {
                 if (!a.DeviceOnLine) return;
-
                 trilist.SetString(joinMap.DeviceName.JoinNumber, Name);
             };
         }
-
         #endregion
-
     }
 }
 

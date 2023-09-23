@@ -12,7 +12,7 @@ namespace RouteCycle.JoinMaps
 	/// <example>
 	/// "EssentialsPluginBridgeJoinMapTemplate" renamed to "SamsungMdcBridgeJoinMap"
 	/// </example>
-	public class EssentialsPluginTemplateBridgeJoinMap : JoinMapBaseAdvanced
+	public class RouteCycleBridgeJoinMap : JoinMapBaseAdvanced
 	{
 		#region Digital
 
@@ -93,8 +93,8 @@ namespace RouteCycle.JoinMaps
 		/// Plugin device BridgeJoinMap constructor
 		/// </summary>
 		/// <param name="joinStart">This will be the join it starts on the EISC bridge</param>
-        public EssentialsPluginTemplateBridgeJoinMap(uint joinStart)
-            : base(joinStart, typeof(EssentialsPluginTemplateBridgeJoinMap))
+        public RouteCycleBridgeJoinMap(uint joinStart)
+            : base(joinStart, typeof(RouteCycleBridgeJoinMap))
 		{
 		}
 	}
