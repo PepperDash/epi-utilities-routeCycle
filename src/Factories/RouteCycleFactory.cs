@@ -3,7 +3,6 @@ using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using Crestron.SimplSharpPro.UI;
 using RouteCycle.JoinMaps;
-using RouteCycle.Config;
 
 namespace RouteCycle.Factories
 {
@@ -41,25 +40,9 @@ namespace RouteCycle.Factories
 
             Debug.Console(1, "[{0}] Factory Attempting to create new device from type: {1}", dc.Key, dc.Type);
 
-            // get the plugin device properties configuration object & check for null 
-            var propertiesConfig = dc.Properties.ToObject<RouteCycleConfigObject>();
-            if (propertiesConfig == null)
-            {
-                Debug.Console(0, "[{0}] Factory: failed to read properties config for {1}", dc.Key, dc.Name);
-                return null;
-            }
-
             var controlConfig = CommFactory.GetControlPropertiesConfig(dc);
 
-            if (controlConfig == null)
-            {
-                return new RouteCycleDevice(dc.Key, dc.Name, propertiesConfig);
-            }
-            else
-            {
-                Debug.Console(0, "[{0}] Factory: Unable to get control properties from device config for {1}", dc.Key, dc.Name);
-                return null;
-            }
+            return new RouteCycleDevice(dc.Key, dc.Name);
         }
     }
 }

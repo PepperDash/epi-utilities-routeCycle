@@ -5,7 +5,6 @@ using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using System.Collections.Generic;
 using System.Threading;
-using RouteCycle.Config;
 using RouteCycle.JoinMaps;
 
 namespace RouteCycle.Factories
@@ -15,10 +14,6 @@ namespace RouteCycle.Factories
 	/// </summary>
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
-        /// <summary>
-        /// It is often desirable to store the config
-        /// </summary>
-        private RouteCycleConfigObject _config;
         private CTimer shiftTimer;
         private List<OutputFeedback> outputFeedbacks = new List<OutputFeedback>();
 
@@ -28,11 +23,10 @@ namespace RouteCycle.Factories
         /// <param name="key">Device unique key</param>
         /// <param name="name">Device friendly name</param>
         /// <param name="config">Device configuration</param>
-        public RouteCycleDevice(string key, string name, RouteCycleConfigObject config)
+        public RouteCycleDevice(string key, string name)
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
-            _config = config;
             
             //Initialize your timer here and set interval
             shiftTimer = new CTimer(shiftTimer_Elapsed, 5000);  // 5000 ms = 5 seconds
@@ -68,28 +62,16 @@ namespace RouteCycle.Factories
 
             // This adds the join map to the collection on the bridge
             if (bridge != null)
-            {
-                bridge.AddJoinMap(Key, joinMap);
-            }
+            { bridge.AddJoinMap(Key, joinMap); }
 
             var customJoins = JoinMapHelper.TryGetJoinMapAdvancedForDevice(joinMapKey);
 
             if (customJoins != null)
-            {
-                joinMap.SetCustomJoinData(customJoins);
-            }
+            { joinMap.SetCustomJoinData(customJoins); }
 
             Debug.Console(1, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
             Debug.Console(0, "Linking to Bridge Type {0}", GetType().Name);
 
-            // links to bridge
-            trilist.SetString(joinMap.DeviceName.JoinNumber, Name);
-
-            trilist.OnlineStatusChange += (o, a) =>
-            {
-                if (!a.DeviceOnLine) return;
-                trilist.SetString(joinMap.DeviceName.JoinNumber, Name);
-            };
         }
         #endregion
         #region customDeviceLogic

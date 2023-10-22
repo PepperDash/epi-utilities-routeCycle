@@ -16,10 +16,10 @@ namespace RouteCycle.JoinMaps
 	{
 		#region Digital
 
-		// TODO [ ] Add digital joins below plugin being developed
+		// TODO [x] Add digital joins below plugin being developed
 
-		[JoinName("IsOnline")]
-		public JoinDataComplete IsOnline = new JoinDataComplete(
+		[JoinName("inUse")]
+		public JoinDataComplete InUse = new JoinDataComplete(
 			new JoinData
 			{
 				JoinNumber = 1,
@@ -27,13 +27,13 @@ namespace RouteCycle.JoinMaps
 			},
 			new JoinMetadata
 			{
-				Description = "Is Online",
-				JoinCapabilities = eJoinCapabilities.ToSIMPL,
+				Description = "Allow routes to be cycled",
+				JoinCapabilities = eJoinCapabilities.FromSIMPL,
 				JoinType = eJoinType.Digital
 			});
 
-		[JoinName("Connect")]
-		public JoinDataComplete Connect = new JoinDataComplete(
+		[JoinName("debug")]
+		public JoinDataComplete Debug = new JoinDataComplete(
 			new JoinData
 			{
 				JoinNumber = 2,
@@ -41,40 +41,169 @@ namespace RouteCycle.JoinMaps
 			},
 			new JoinMetadata
 			{
-				Description = "Connect (Held)/Disconnect (Release) & corresponding feedback",
-				JoinCapabilities = eJoinCapabilities.ToFromSIMPL,
+				Description = "Internal debugging",
+				JoinCapabilities = eJoinCapabilities.FromSIMPL,
 				JoinType = eJoinType.Digital
-			});		
+			});
+
+        [JoinName("cycleRoute")]
+        public JoinDataComplete CycleRoute = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 3,
+                JoinSpan = 1
+            },
+            new JoinMetadata
+            {
+                Description = "Manually cycle routes",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("sourcesClear")]
+        public JoinDataComplete SourcesClear = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 4,
+                JoinSpan = 1
+            },
+            new JoinMetadata
+            {
+                Description = "Clear all source objects from routeCycle",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("destinationsClear")]
+        public JoinDataComplete DestinationsClear = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 5,
+                JoinSpan = 1
+            },
+            new JoinMetadata
+            {
+                Description = "Clear all destination objects from routeCycle",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("sourceSelect")]
+        public JoinDataComplete SourceSelect = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 11,
+                JoinSpan = 32
+            },
+            new JoinMetadata
+            {
+                Description = "Toggle to include item in routeCycle",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("destinationSelect")]
+        public JoinDataComplete DestinationSelect = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 51,
+                JoinSpan = 32
+            },
+            new JoinMetadata
+            {
+                Description = "Toggle to include item in routeCycle",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Digital
+            });	
+
+        // Feedback side of wrapper below
+
+        [JoinName("reportNotifyPulse")]
+        public JoinDataComplete ReportNotifyPulse = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 1,
+                JoinSpan = 1
+            },
+            new JoinMetadata
+            {
+                Description = "Item pulses when new message is sent",
+                JoinCapabilities = eJoinCapabilities.ToSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("sourceFeedback")]
+        public JoinDataComplete SourceFeedback = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 11,
+                JoinSpan = 32
+            },
+            new JoinMetadata
+            {
+                Description = "Feedback state of Source, when active will be included in routeCycle",
+                JoinCapabilities = eJoinCapabilities.ToSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("destinationFeedback")]
+        public JoinDataComplete DestinationFeedback = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 51,
+                JoinSpan = 32
+            },
+            new JoinMetadata
+            {
+                Description = "Feedback state of Destination, when active will be included in routeCycle",
+                JoinCapabilities = eJoinCapabilities.ToSIMPL,
+                JoinType = eJoinType.Digital
+            });	
 
 		#endregion
 
 
 		#region Analog
 
-		// TODO [ ] Add analog joins below plugin being developed
+		// TODO [x] Add analog joins below plugin being developed
 
-		[JoinName("Status")]
-		public JoinDataComplete Status = new JoinDataComplete(
+		[JoinName("destinationRouteIn")]
+		public JoinDataComplete DestinationRouteIn = new JoinDataComplete(
 			new JoinData
 			{
 				JoinNumber = 1,
-				JoinSpan = 1
+				JoinSpan = 32
 			},
 			new JoinMetadata
 			{
-				Description = "Socket Status",
-				JoinCapabilities = eJoinCapabilities.ToSIMPL,
+				Description = "Routed Destination Source Value",
+				JoinCapabilities = eJoinCapabilities.FromSIMPL,
 				JoinType = eJoinType.Analog
 			});
+
+        [JoinName("destinationRouteOut")]
+        public JoinDataComplete DestinationRouteOut = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 1,
+                JoinSpan = 32
+            },
+            new JoinMetadata
+            {
+                Description = "Routed Destination Source Value",
+                JoinCapabilities = eJoinCapabilities.ToSIMPL,
+                JoinType = eJoinType.Analog
+            });
 
 		#endregion
 
 
 		#region Serial
 
-		// TODO [ ] Add serial joins below plugin being developed
+		// TODO [x] Add serial joins below plugin being developed
 
-		public JoinDataComplete DeviceName = new JoinDataComplete(
+        [JoinName("reportNotifyMessage")]
+		public JoinDataComplete ReportNotifyMessage = new JoinDataComplete(
 			new JoinData
 			{
 				JoinNumber = 1,
@@ -82,7 +211,7 @@ namespace RouteCycle.JoinMaps
 			},
 			new JoinMetadata
 			{
-				Description = "Device Name",
+				Description = "Notification Message",
 				JoinCapabilities = eJoinCapabilities.ToSIMPL,
 				JoinType = eJoinType.Serial
 			});

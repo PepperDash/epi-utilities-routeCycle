@@ -101,10 +101,12 @@
   <ItemGroup>
     <Compile Include="Device\RouteCycleDevice.cs" />
     <Compile Include="JoinMaps\RouteCycleBaseJoinMap.cs" />
-    <Compile Include="Config\RouteCycleConfigObject.cs" />
     <Compile Include="Factories\RouteCycleFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="Properties\ControlSystem.cfg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Config\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CompactFramework.CSharp.targets" />
   <PropertyGroup>
