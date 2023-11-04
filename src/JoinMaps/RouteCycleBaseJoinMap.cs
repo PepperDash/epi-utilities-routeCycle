@@ -32,25 +32,11 @@ namespace RouteCycle.JoinMaps
 				JoinType = eJoinType.Digital
 			});
 
-		[JoinName("debug")]
-		public JoinDataComplete Debug = new JoinDataComplete(
-			new JoinData
-			{
-				JoinNumber = 2,
-				JoinSpan = 1
-			},
-			new JoinMetadata
-			{
-				Description = "Internal debugging",
-				JoinCapabilities = eJoinCapabilities.FromSIMPL,
-				JoinType = eJoinType.Digital
-			});
-
         [JoinName("cycleRoute")]
         public JoinDataComplete CycleRoute = new JoinDataComplete(
             new JoinData
             {
-                JoinNumber = 3,
+                JoinNumber = 2,
                 JoinSpan = 1
             },
             new JoinMetadata
@@ -64,7 +50,7 @@ namespace RouteCycle.JoinMaps
         public JoinDataComplete SourcesClear = new JoinDataComplete(
             new JoinData
             {
-                JoinNumber = 4,
+                JoinNumber = 3,
                 JoinSpan = 1
             },
             new JoinMetadata
@@ -78,7 +64,7 @@ namespace RouteCycle.JoinMaps
         public JoinDataComplete DestinationsClear = new JoinDataComplete(
             new JoinData
             {
-                JoinNumber = 5,
+                JoinNumber = 4,
                 JoinSpan = 1
             },
             new JoinMetadata

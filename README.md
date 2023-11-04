@@ -65,23 +65,14 @@ Update the configuration object as needed for the plugin being developed.
 {
 	"devices": [
 		{
-			"key": "essentialsPluginKey",
-			"name": "Essentials Plugin Name",
-			"type": "essentialsPluginTypeName",
-			"group": "pluginDevices",
-			"properties": {
-				"pluginCollection": {
-					"item1": {
-						"name": "Item 1",
-						"value": 1
-					},
-					"item2": {
-						"name": "Item 2",
-						"value": 2
-					}
-				}
-			}
-		}		
+        "key": "ar-bridge-1",
+        "uid": 0,
+        "name": "Auto Route Cycler",
+        "type": "routeCycle",
+        "group": "switcher",
+        "parentDeviceKey": "processor",
+        "properties": {}
+      },		
 	]
 }
 ```
@@ -94,26 +85,28 @@ Update the bridge configuration object as needed for the plugin being developed.
 {
 	"devices": [
 		{
-			"key": "essentialsPluginBridgeKey",
-			"name": "Essentials Plugin Bridge Name",
-			"group": "api",
-			"type": "eiscApiAdvanced",
-			"properties": {
-				"control": {
-					"ipid": "1A",
-					"tcpSshProperties": {
-						"address": "127.0.0.2",
-						"port": 0
-					}
-				},
-				"devices": [
-					{
-						"deviceKey": "essentialsPluginKey",
-						"joinStart": 1
-					}
-				]
-			}
-		}
+        "key": "autoRouteBridge",
+        "uid": 0,
+        "name": "Auto Route Bridge 1",
+        "group": "api",
+        "type": "eiscApiAdvanced",
+        "properties": {
+          "control": {
+            "tcpSshProperties": {
+              "address": "127.0.0.2",
+              "port": 0
+            },
+            "ipid": "11",
+            "method": "ipidTcp"
+          },
+          "devices": [
+            {
+              "deviceKey": "ar-bridge-1",
+              "joinStart": 1
+            }
+          ]
+        }
+      }
 	]
 }
 ```
@@ -123,28 +116,29 @@ Update the bridge configuration object as needed for the plugin being developed.
 The selection below documents the digital, analog, and serial joins used by the SiMPL EISC. Update the bridge join maps as needed for the plugin being developed.
 
 #### Digitals
-| dig-o (Input/Triggers)                | I/O | dig-i (Feedback) |
-|---------------------------------------|-----|------------------|
-|                                       | 1   | Is Online        |
-| Connect (Held) / Disconnect (Release) | 2   | Connected        |
-|                                       | 3   |                  |
-|                                       | 4   |                  |
-|                                       | 5   |                  |
+| dig-o (Input/Triggers)     | I/O   | dig-i (Feedback)     |
+|----------------------------|-------|----------------------|
+| InUse_Fb                   | 1     | Report Notify Pulse  |
+| CycleRoute                 | 2     | Connected            |
+| SourcesClear               | 3     |                      |
+| DestinationsClear          | 4     |                      |
+| SourceSelect               | 11-32 | SourceSelectFb       |
+| DestinationSelect          | 51-82 | DestinationSelectFb  |
 #### Analogs
-| an_o (Input/Triggers) | I/O | an_i (Feedback) |
-|-----------------------|-----|-----------------|
-|                       | 1   | Socket Status   |
-|                       | 2   | Monitor Status  |
-|                       | 3   |                 |
-|                       | 4   |                 |
-|                       | 5   |                 |
+| an_o (Input/Triggers) | I/O  | an_i (Feedback) |
+|-----------------------|------|-----------------|
+| Destination Route-In  | 1-32 | Destination Route-Out |
+|                       | 2    |                       |
+|                       | 3    |                       |
+|                       | 4    |                       |
+|                       | 5    |                       |
 
 
 #### Serials
-| serial-o (Input/Triggers) | I/O | serial-i (Feedback) |
-|---------------------------|-----|---------------------|
-|                           | 1   | Device Name         |
-|                           | 2   |                     |
-|                           | 3   |                     |
-|                           | 4   |                     |
-|                           | 5   |                     |
+| serial-o (Input/Triggers) | I/O | serial-i (Feedback)  |
+|---------------------------|-----|----------------------|
+|                           | 1   | Notification Message |
+|                           | 2   |                      |
+|                           | 3   |                      |
+|                           | 4   |                      |
+|                           | 5   |                      |
