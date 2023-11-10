@@ -41,7 +41,7 @@ namespace RouteCycle.Factories
                     Index = i,
                     IndexEnabled = false,
                     IndexValue = 0,
-                    IndexLabel = ("Index {i}"),
+                    IndexLabel = string.Format("Index {0}", i),
                     ShiftedIndex = 0,
                     ShiftedIndexValue = 0
                 });
@@ -75,10 +75,26 @@ namespace RouteCycle.Factories
         }
         #endregion
         #region customDeviceLogic
-
-        private void shiftTimer_Elapsed(object sender)
+        
+        /// <summary>
+        ///  
+        /// </summary>
+        /// <param name="sender"></param>
+        private void shiftTimer_Elapsed(object sender){
+            CycleRoute();
+        }
+        
+        /// <summary>
+        /// The first loop prepares for the shift by setting up a
+        /// "next value" (ShiftedIndexValue) for each enabled element.
+        /// The second loop executes the shift by updating the actual 
+        /// values (IndexValue and IndexLabel) of elements identified
+        /// by their ShiftedIndex with the values and labels from the 
+        /// current iteration.
+        /// </summary>
+        private void CycleRoute()
         {
-            // First loop
+            /// First loop
             for (int i = 0; i < outputFeedbacks.Count - 1; i++)
             {
                 var current = outputFeedbacks[i];
@@ -89,7 +105,7 @@ namespace RouteCycle.Factories
                 }
             }
 
-            // Second loop
+            /// Second loop
             for (int i = 0; i < outputFeedbacks.Count; i++)
             {
                 var current = outputFeedbacks[i];
@@ -102,6 +118,13 @@ namespace RouteCycle.Factories
             }
         }
 
+        /// <summary>
+        /// Method provides a simple interface to control the timer,
+        /// allowing other parts of the code to enable or disable the timer
+        /// functionality by starting or stopping the periodic execution of a
+        /// callback method
+        /// </summary>
+        /// <param name="enabled"></param>
         public void SetTimerEnabled(bool enabled)
         {
             if (enabled)
@@ -111,7 +134,8 @@ namespace RouteCycle.Factories
         }
 
         /// <summary>
-        /// Retuns object at specific index containing three params within single object called OutputFeedback
+        /// Retuns object at specific index containing three params
+        /// within single object called OutputFeedback
         /// </summary>
         /// <param name="index">Index of OutputFeedback</param>
         /// <returns></returns>
@@ -145,6 +169,21 @@ namespace RouteCycle.Factories
         public string IndexLabel { get; set; }
         public ushort ShiftedIndex { get; set; }
         public ushort ShiftedIndexValue { get; set; }
+
+        // This method sets the value of the IndexEnabled property
+        public void SetIndexEnabled(bool enabled){
+            IndexEnabled = enabled; 
+        }
+
+        // This method sets the value of the IndexValue property
+        public void SetIndexValue(ushort value){
+            IndexValue = value;
+        }
+
+        // This method sets the value of the IndexLabel property
+        public void SetIndexLabel(string label){
+            IndexLabel = label;
+        }
     }
 }
 
