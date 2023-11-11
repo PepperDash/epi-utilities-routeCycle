@@ -14,10 +14,11 @@ namespace RouteCycle.Factories
 	/// </summary>
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
+        private int maxIO = 32;
         private CTimer shiftTimer;
         private List<OutputFeedback> outputFeedbacks = new List<OutputFeedback>();
+        TrackableArray<bool> _sourceEnable = new TrackableArray<bool>(32);
         private bool _inUse { get; set; }
-        private bool[] _sourceEnableArray;
 
         /// <summary>
         /// Plugin device constructor
@@ -29,7 +30,6 @@ namespace RouteCycle.Factories
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
-            _sourceEnableArray = new bool[32];
             
             //Initialize your timer here and set interval
             shiftTimer = new CTimer(shiftTimer_Elapsed, 5000);  // 5000 ms = 5 seconds
@@ -37,7 +37,7 @@ namespace RouteCycle.Factories
             SetTimerEnabled(false);
 
             // Initialize the OutputFeedbacks collection
-            for (ushort i = 0; i < 32; i++)
+            for (ushort i = 0; i < maxIO; i++)
             {
                 outputFeedbacks.Add(new OutputFeedback
                 {
@@ -84,7 +84,7 @@ namespace RouteCycle.Factories
             trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, object);
             trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, object);
 
-            trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber, object);
+            trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber, _sourceEnable[0]);
             trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 1, object);
             trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 2, object);
             trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber, object);
@@ -98,15 +98,20 @@ namespace RouteCycle.Factories
         private void SetInUseStateTrue(){ _inUse = true; }
         private void SetInUseStateFalse() { _inUse = false; }
 
-        // Set all Souces to 
+        // Set all SoucesEnable values to false
         private void SetSourcesClear()
         {
-            for (ushort i = 0; i < 32; i++)
+            for (ushort i = 0; i < (maxIO - 1); i++) {
+                _sourceEnable[i] = false;
+            }
+        }
+
+        // Set all Destinations.IndexEnabled to false 
+        private void SetDestinationsClear()
+        {
+            for (ushort i = 0; i < (maxIO - 1); i++)
             {
-                outputFeedbacks.Add(new OutputFeedback
-                {
-                    IndexEnabled = false,
-                });
+                outputFeedbacks[i].IndexEnabled = false;
             }
         }
 
@@ -222,6 +227,49 @@ namespace RouteCycle.Factories
         public void SetIndexLabel(string label){
             IndexLabel = label;
         }
+    }
+
+    public class TrackableArray<T>
+    {
+        private T[] array;
+        public int LastChangedIndex { get; private set; }
+
+        public TrackableArray(int size)
+        {
+            array = new T[size];
+            LastChangedIndex = -1;  // -1 indicates no changes made yet
+        }
+
+        public T this[int index]
+        {
+            get { return array[index]; }
+            set
+            {
+                if (!array[index].Equals(value)) // Check if the value is actually changing
+                {
+                    array[index] = value;
+                    LastChangedIndex = index; // Update the last changed index
+                }
+            }
+        }
+
+        // This method exists only if T is bool
+        public void SetBoolean(int index, bool value)
+        {
+            if (typeof(T) == typeof(bool))
+            {
+                if (!Equals(array[index], value)) // Compare current value with new value
+                {
+                    array[index] = (T)(object)value; // Cast bool to T (since T is bool)
+                    LastChangedIndex = index; // Update the last changed index
+                }
+            }
+            else
+            {
+                throw new System.Exception("SetBoolean method can only be used with TrackableArray of type bool.");
+            }
+        }
+
     }
 }
 
