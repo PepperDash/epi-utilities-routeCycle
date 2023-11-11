@@ -16,6 +16,8 @@ namespace RouteCycle.Factories
     {
         private CTimer shiftTimer;
         private List<OutputFeedback> outputFeedbacks = new List<OutputFeedback>();
+        private bool _inUse { get; set; }
+        private bool[] _sourceEnableArray;
 
         /// <summary>
         /// Plugin device constructor
@@ -27,6 +29,7 @@ namespace RouteCycle.Factories
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
+            _sourceEnableArray = new bool[32];
             
             //Initialize your timer here and set interval
             shiftTimer = new CTimer(shiftTimer_Elapsed, 5000);  // 5000 ms = 5 seconds
@@ -72,12 +75,43 @@ namespace RouteCycle.Factories
             Debug.Console(1, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
             Debug.Console(0, "Linking to Bridge Type {0}", GetType().Name);
 
+            // Device joinMap triggers and feedback
+            trilist.SetSigTrueAction(joinMap.InUse.JoinNumber, SetInUseStateTrue);
+            trilist.SetSigFalseAction(joinMap.InUse.JoinNumber, SetInUseStateFalse);
+
+            trilist.SetSigTrueAction(joinMap.CycleRoute.JoinNumber, CycleRoute);
+
+            trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, object);
+            trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, object);
+
+            trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber, object);
+            trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 1, object);
+            trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 2, object);
+            trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber, object);
+            trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber + 1, object);
+            trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber + 2, object);
         }
         #endregion
         #region customDeviceLogic
         
+        // Set InUse state
+        private void SetInUseStateTrue(){ _inUse = true; }
+        private void SetInUseStateFalse() { _inUse = false; }
+
+        // Set all Souces to 
+        private void SetSourcesClear()
+        {
+            for (ushort i = 0; i < 32; i++)
+            {
+                outputFeedbacks.Add(new OutputFeedback
+                {
+                    IndexEnabled = false,
+                });
+            }
+        }
+
         /// <summary>
-        ///  
+        /// Method called when shifTimer expires.
         /// </summary>
         /// <param name="sender"></param>
         private void shiftTimer_Elapsed(object sender){
@@ -155,6 +189,10 @@ namespace RouteCycle.Factories
             item.IndexValue = feedback.IndexValue;
             item.IndexLabel = feedback.IndexLabel;
         }
+
+        // This will set the IndexEnabled property to true
+        //outputFeedbacks.SetIndexEnabled(true);
+        //outputFeedbacks.SetIndexValue(ushort);
         #endregion
     }
 
