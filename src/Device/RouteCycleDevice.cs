@@ -15,8 +15,7 @@ namespace RouteCycle.Factories
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
         private int maxIO = 32;
-        private CTimer shiftTimer;
-        private List<OutputFeedback> outputFeedbacks { get; set;}
+        private List<CustomRouteCycleDeviceCollection> _destinationFeedbacks { get; set;}
         TrackableArray<bool> _sourceEnable { get; set;}
         private bool _inUse { get; set; }
 
@@ -30,23 +29,17 @@ namespace RouteCycle.Factories
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
-            
-            //Initialize your timer here and set interval
-            shiftTimer = new CTimer(shiftTimer_Elapsed, 5000);  // 5000 ms = 5 seconds
-            //CTimer initilizes right way, trigger method to stop timer if running
-            SetTimerEnabled(false);
-            outputFeedbacks = new List<OutputFeedback>();
+            _destinationFeedbacks = new List<CustomRouteCycleDeviceCollection>();
             _sourceEnable = new TrackableArray<bool>(32);
 
-            // Initialize the OutputFeedbacks collection
+            // Initialize the _destinationFeedbacks collection
             for (ushort i = 0; i < maxIO; i++)
             {
-                outputFeedbacks.Add(new OutputFeedback
+                _destinationFeedbacks.Add(new CustomRouteCycleDeviceCollection
                 {
                     Index = i,
                     IndexEnabled = false,
                     IndexValue = 0,
-                    IndexLabel = string.Format("Index {0}", i),
                     ShiftedIndex = 0,
                     ShiftedIndexValue = 0
                 });
@@ -78,41 +71,32 @@ namespace RouteCycle.Factories
             Debug.Console(0, "Linking to Bridge Type {0}", GetType().Name);
 
             // Device joinMap triggers and feedback
-            trilist.SetSigTrueAction(joinMap.InUse.JoinNumber, SetInUseStateTrue);
-            trilist.SetSigFalseAction(joinMap.InUse.JoinNumber, SetInUseStateFalse);
+            trilist.SetSigTrueAction(joinMap.InUse.JoinNumber, _setInUseStateTrue);
+            trilist.SetSigFalseAction(joinMap.InUse.JoinNumber, _setInUseStateFalse);
 
             trilist.SetSigTrueAction(joinMap.CycleRoute.JoinNumber, CycleRoute);
+            trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _setSourceEnablesClear);
+            trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
 
-            trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, SetSourcesClear);
-            trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, SetDestinationsClear);
-
-            //trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber, doNothing);
-            //trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 1, object);
-            //trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 2, object);
-            //trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber, object);
-            //trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber + 1, object);
-            //trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber + 2, object);
-
-            foreach (var kvp in outputFeedbacks)
+            foreach (var kvp in _destinationFeedbacks)
             {
                 // Get the actual join number of the signal
                 var sourceSelectJoin = kvp.Index + joinMap.SourceSelect.JoinNumber - 1;
                 var destinationSelectJoin = kvp.Index + joinMap.DestinationSelect.JoinNumber - 1;
-                // Get the actual output number which is the item.Index as read in from the configuraiton file
-                var output = kvp.Index;
                 // Link incoming from SIMPL EISC bridge (aka route request) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { kvp.IndexEnabled = input; });
+                trilist.SetUShortSigAction(destinationSelectJoin, (input) => { kvp.IndexValue = input; });
             }
         }
         #endregion
         #region customDeviceLogic
 
-        // Set InUse state
-        private void SetInUseStateTrue(){ _inUse = true; }
-        private void SetInUseStateFalse() { _inUse = false; }
+        // Set _inUse state
+        private void _setInUseStateTrue(){ _inUse = true; }
+        private void _setInUseStateFalse() { _inUse = false; }
 
-        // Set all SoucesEnable values to false
-        private void SetSourcesClear()
+        // Set all Souces Enable booleans to false
+        private void _setSourceEnablesClear()
         {
             for (ushort i = 0; i < (maxIO - 1); i++) {
                 _sourceEnable[i] = false;
@@ -120,22 +104,14 @@ namespace RouteCycle.Factories
         }
 
         // Set all Destinations.IndexEnabled to false 
-        private void SetDestinationsClear()
+        private void _setDestinationEnablesClear()
         {
             for (ushort i = 0; i < (maxIO - 1); i++)
             {
-                outputFeedbacks[i].IndexEnabled = false;
+                _destinationFeedbacks[i].IndexEnabled = false;
             }
         }
 
-        /// <summary>
-        /// Method called when shifTimer expires.
-        /// </summary>
-        /// <param name="sender"></param>
-        private void shiftTimer_Elapsed(object sender){
-            CycleRoute();
-        }
-        
         /// <summary>
         /// The first loop prepares for the shift by setting up a
         /// "next value" (ShiftedIndexValue) for each enabled element.
@@ -147,10 +123,10 @@ namespace RouteCycle.Factories
         private void CycleRoute()
         {
             /// First loop
-            for (int i = 0; i < outputFeedbacks.Count - 1; i++)
+            for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
             {
-                var current = outputFeedbacks[i];
-                var next = outputFeedbacks[i + 1];
+                var current = _destinationFeedbacks[i];
+                var next = _destinationFeedbacks[i + 1];
                 if (current.IndexEnabled)
                 {
                     current.ShiftedIndexValue = next.IndexValue;
@@ -158,31 +134,15 @@ namespace RouteCycle.Factories
             }
 
             /// Second loop
-            for (int i = 0; i < outputFeedbacks.Count; i++)
+            for (int i = 0; i < _destinationFeedbacks.Count; i++)
             {
-                var current = outputFeedbacks[i];
+                var current = _destinationFeedbacks[i];
                 if (current.IndexEnabled)
                 {
-                    var shiftedItem = outputFeedbacks[current.ShiftedIndex];
+                    var shiftedItem = _destinationFeedbacks[current.ShiftedIndex];
                     shiftedItem.IndexValue = current.IndexValue;
-                    shiftedItem.IndexLabel = current.IndexLabel;
                 }
             }
-        }
-
-        /// <summary>
-        /// Method provides a simple interface to control the timer,
-        /// allowing other parts of the code to enable or disable the timer
-        /// functionality by starting or stopping the periodic execution of a
-        /// callback method
-        /// </summary>
-        /// <param name="enabled"></param>
-        public void SetTimerEnabled(bool enabled)
-        {
-            if (enabled)
-                shiftTimer.Reset(1000);  // Reset and restart the timer
-            else
-                shiftTimer.Stop();  // Stop the timer
         }
 
         /// <summary>
@@ -191,38 +151,32 @@ namespace RouteCycle.Factories
         /// </summary>
         /// <param name="index">Index of OutputFeedback</param>
         /// <returns></returns>
-        public OutputFeedback GetOutputFeedback(int index)
+        public CustomRouteCycleDeviceCollection GetOutputFeedback(int index)
         {
-            return outputFeedbacks[index];
+            return _destinationFeedbacks[index];
         }
 
         /// <summary>
         /// Manually set OutputFeedback, requires full OutputFeedback object w/ three params
         /// </summary>
         /// <param name="feedback">Complex object w/ bool IndexEnabled, ushort IndexValue, string IndexLabel</param>
-        public void SetOutputFeedback(OutputFeedback feedback)
+        public void SetOutputFeedback(CustomRouteCycleDeviceCollection feedback)
         {
-            var item = outputFeedbacks[feedback.Index];
+            var item = _destinationFeedbacks[feedback.Index];
             item.IndexEnabled = feedback.IndexEnabled;
             item.IndexValue = feedback.IndexValue;
-            item.IndexLabel = feedback.IndexLabel;
         }
-
-        // This will set the IndexEnabled property to true
-        //outputFeedbacks.SetIndexEnabled(true);
-        //outputFeedbacks.SetIndexValue(ushort);
         #endregion
     }
 
     /// <summary>
     /// OutputFeedback custom object to define array of outputs on bridge
     /// </summary>
-    public class OutputFeedback
+    public class CustomRouteCycleDeviceCollection
     {
         public ushort Index { get; set; }
         public bool IndexEnabled { get; set; }
         public ushort IndexValue { get; set; }
-        public string IndexLabel { get; set; }
         public ushort ShiftedIndex { get; set; }
         public ushort ShiftedIndexValue { get; set; }
 
@@ -236,9 +190,15 @@ namespace RouteCycle.Factories
             IndexValue = value;
         }
 
-        // This method sets the value of the IndexLabel property
-        public void SetIndexLabel(string label){
-            IndexLabel = label;
+        // Returns the IndexValue property ushort value
+        public ushort FireIndexValueUpdate(){
+            return IndexValue;
+        }
+
+        // Returns the IndexEbabled property bool value
+        public bool FireIndexEnabledUpdate()
+        {
+            return IndexEnabled;
         }
     }
 
