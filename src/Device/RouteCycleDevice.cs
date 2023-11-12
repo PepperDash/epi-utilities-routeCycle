@@ -16,8 +16,8 @@ namespace RouteCycle.Factories
     {
         private int maxIO = 32;
         private CTimer shiftTimer;
-        private List<OutputFeedback> outputFeedbacks = new List<OutputFeedback>();
-        TrackableArray<bool> _sourceEnable = new TrackableArray<bool>(32);
+        private List<OutputFeedback> outputFeedbacks { get; set;}
+        TrackableArray<bool> _sourceEnable { get; set;}
         private bool _inUse { get; set; }
 
         /// <summary>
@@ -35,6 +35,8 @@ namespace RouteCycle.Factories
             shiftTimer = new CTimer(shiftTimer_Elapsed, 5000);  // 5000 ms = 5 seconds
             //CTimer initilizes right way, trigger method to stop timer if running
             SetTimerEnabled(false);
+            outputFeedbacks = new List<OutputFeedback>();
+            _sourceEnable = new TrackableArray<bool>(32);
 
             // Initialize the OutputFeedbacks collection
             for (ushort i = 0; i < maxIO; i++)
@@ -81,19 +83,30 @@ namespace RouteCycle.Factories
 
             trilist.SetSigTrueAction(joinMap.CycleRoute.JoinNumber, CycleRoute);
 
-            trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, object);
-            trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, object);
+            trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, SetSourcesClear);
+            trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, SetDestinationsClear);
 
-            trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber, _sourceEnable[0]);
-            trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 1, object);
-            trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 2, object);
-            trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber, object);
-            trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber + 1, object);
-            trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber + 2, object);
+            //trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber, doNothing);
+            //trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 1, object);
+            //trilist.SetSigTrueAction(joinMap.SourceSelect.JoinNumber + 2, object);
+            //trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber, object);
+            //trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber + 1, object);
+            //trilist.SetSigTrueAction(joinMap.DestinationSelect.JoinNumber + 2, object);
+
+            foreach (var kvp in outputFeedbacks)
+            {
+                // Get the actual join number of the signal
+                var sourceSelectJoin = kvp.Index + joinMap.SourceSelect.JoinNumber - 1;
+                var destinationSelectJoin = kvp.Index + joinMap.DestinationSelect.JoinNumber - 1;
+                // Get the actual output number which is the item.Index as read in from the configuraiton file
+                var output = kvp.Index;
+                // Link incoming from SIMPL EISC bridge (aka route request) to internal method
+                trilist.SetBoolSigAction(destinationSelectJoin, (input) => { kvp.IndexEnabled = input; });
+            }
         }
         #endregion
         #region customDeviceLogic
-        
+
         // Set InUse state
         private void SetInUseStateTrue(){ _inUse = true; }
         private void SetInUseStateFalse() { _inUse = false; }
@@ -269,7 +282,6 @@ namespace RouteCycle.Factories
                 throw new System.Exception("SetBoolean method can only be used with TrackableArray of type bool.");
             }
         }
-
     }
 }
 
