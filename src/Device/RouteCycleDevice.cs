@@ -16,7 +16,7 @@ namespace RouteCycle.Factories
     {
         private int maxIO = 32;
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
-        TrackableArray<bool> _sourceEnable { get; set;}
+        private List<CustomDeviceCollectionWithFeedback> _sourceFeedbacks { get; set; }
         private bool _inUse { get; set; }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace RouteCycle.Factories
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
             _destinationFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
-            _sourceEnable = new TrackableArray<bool>(32);
+            _sourceFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
 
             // Initialize the _destinationFeedbacks collection
             for (ushort i = 0; i < maxIO; i++)
@@ -42,6 +42,16 @@ namespace RouteCycle.Factories
                     IndexValue = 0,
                     ShiftedIndex = 0,
                     ShiftedIndexValue = 0
+                });
+            }
+
+            // Initialize the _sourceFeedbacks collection
+            for (ushort i = 0; i < maxIO; i++)
+            {
+                _sourceFeedbacks.Add(new CustomDeviceCollectionWithFeedback
+                {
+                    Index = i,
+                    IndexEnabled = false
                 });
             }
         }
@@ -81,18 +91,29 @@ namespace RouteCycle.Factories
             foreach (var kvp in _destinationFeedbacks)
             {
                 // Get the actual join number of the signal
-                var sourceSelectJoin = kvp.Index + joinMap.SourceSelect.JoinNumber - 1;
                 var destinationSelectJoin = kvp.Index + joinMap.DestinationSelect.JoinNumber - 1;
                 // Link incoming from SIMPL EISC bridge (aka route request) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { kvp.IndexEnabled = input; });
                 trilist.SetUShortSigAction(destinationSelectJoin, (input) => { kvp.IndexValue = input; });
 
-                var feedbackEnabled = kvp.Feedback;
+                var feedbackEnabled = kvp.FeedbackBoolean;
                 if (feedbackEnabled == null) continue;
                 feedbackEnabled.LinkInputSig(trilist.BooleanInput[destinationSelectJoin]);
                 var feedbackIndex = kvp.FeedbackInteger;
                 if (feedbackIndex == null) continue;
                 feedbackIndex.LinkInputSig(trilist.UShortInput[destinationSelectJoin]);
+            }
+
+            foreach (var kvp in _destinationFeedbacks)
+            {
+                // Get the actual join number of the signal
+                var sourceSelectJoin = kvp.Index + joinMap.SourceSelect.JoinNumber - 1;
+                // Link incoming from SIMPL EISC bridge to internal method
+                trilist.SetBoolSigAction(sourceSelectJoin, (input) => { kvp.IndexEnabled = input; });
+
+                var feedbackEnabled = kvp.FeedbackBoolean;
+                if (feedbackEnabled == null) continue;
+                feedbackEnabled.LinkInputSig(trilist.BooleanInput[sourceSelectJoin]);
             }
 
             UpdateFeedbacks();
@@ -114,7 +135,7 @@ namespace RouteCycle.Factories
         private void _setSourceEnablesClear()
         {
             for (ushort i = 0; i < (maxIO - 1); i++) {
-                _sourceEnable[i] = false;
+                _sourceFeedbacks[i].IndexEnabled = false;
             }
         }
 
@@ -166,7 +187,7 @@ namespace RouteCycle.Factories
         /// </summary>
         /// <param name="index">Index of OutputFeedback</param>
         /// <returns></returns>
-        public CustomDeviceCollectionWithFeedback GetCustomRouteCycleDeviceCollectionInstance(int index)
+        public CustomDeviceCollectionWithFeedback GetCustomDeviceCollectionInstance(int index)
         {
             return _destinationFeedbacks[index];
         }
@@ -175,7 +196,7 @@ namespace RouteCycle.Factories
         /// Manually set OutputFeedback, requires full OutputFeedback object w/ three params
         /// </summary>
         /// <param name="feedback">Complex object w/ bool IndexEnabled, ushort IndexValue, string IndexLabel</param>
-        public void SetCustomRouteCycleDeviceCollectionInstance(CustomDeviceCollectionWithFeedback feedback)
+        public void SetCustomDeviceCollectionInstance(CustomDeviceCollectionWithFeedback feedback)
         {
             var item = _destinationFeedbacks[feedback.Index];
             item.IndexEnabled = feedback.IndexEnabled;
@@ -188,9 +209,11 @@ namespace RouteCycle.Factories
         private void UpdateFeedbacks()
         {
             foreach (var item in _destinationFeedbacks)
-                item.Feedback.FireUpdate();
+                item.FeedbackBoolean.FireUpdate();
             foreach (var item in _destinationFeedbacks)
                 item.FeedbackInteger.FireUpdate();
+            foreach (var item in _sourceFeedbacks)
+                item.FeedbackBoolean.FireUpdate();
         }
         #endregion
     }
@@ -202,7 +225,7 @@ namespace RouteCycle.Factories
     {
         private bool _boolValue;
         private ushort _intValue;
-        public readonly BoolFeedback Feedback;
+        public readonly BoolFeedback FeedbackBoolean;
         public readonly IntFeedback FeedbackInteger;
         public ushort Index { get; set; }
         public bool IndexEnabled 
@@ -214,7 +237,7 @@ namespace RouteCycle.Factories
             set 
             {
                 _boolValue = value;
-                Feedback.FireUpdate();
+                FeedbackBoolean.FireUpdate();
             }
         }
         public ushort IndexValue
@@ -237,7 +260,7 @@ namespace RouteCycle.Factories
         /// </summary>
         public CustomDeviceCollectionWithFeedback()
         {
-            Feedback = new BoolFeedback(() => _boolValue);
+            FeedbackBoolean = new BoolFeedback(() => _boolValue);
             FeedbackInteger = new IntFeedback(() => _intValue);
         }
 
