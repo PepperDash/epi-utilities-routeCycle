@@ -15,7 +15,7 @@ namespace RouteCycle.Factories
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
         private int maxIO = 32;
-        private List<CustomRouteCycleDeviceCollection> _destinationFeedbacks { get; set;}
+        private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
         TrackableArray<bool> _sourceEnable { get; set;}
         private bool _inUse { get; set; }
 
@@ -29,13 +29,13 @@ namespace RouteCycle.Factories
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
-            _destinationFeedbacks = new List<CustomRouteCycleDeviceCollection>();
+            _destinationFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
             _sourceEnable = new TrackableArray<bool>(32);
 
             // Initialize the _destinationFeedbacks collection
             for (ushort i = 0; i < maxIO; i++)
             {
-                _destinationFeedbacks.Add(new CustomRouteCycleDeviceCollection
+                _destinationFeedbacks.Add(new CustomDeviceCollectionWithFeedback
                 {
                     Index = i,
                     IndexEnabled = false,
@@ -86,7 +86,22 @@ namespace RouteCycle.Factories
                 // Link incoming from SIMPL EISC bridge (aka route request) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { kvp.IndexEnabled = input; });
                 trilist.SetUShortSigAction(destinationSelectJoin, (input) => { kvp.IndexValue = input; });
+
+                var feedbackEnabled = kvp.Feedback;
+                if (feedbackEnabled == null) continue;
+                feedbackEnabled.LinkInputSig(trilist.BooleanInput[destinationSelectJoin]);
+                var feedbackIndex = kvp.FeedbackInteger;
+                if (feedbackIndex == null) continue;
+                feedbackIndex.LinkInputSig(trilist.UShortInput[destinationSelectJoin]);
             }
+
+            UpdateFeedbacks();
+
+            trilist.OnlineStatusChange += (o, a) =>
+            {
+                if (!a.DeviceOnLine) return;
+                UpdateFeedbacks();
+            };
         }
         #endregion
         #region customDeviceLogic
@@ -151,7 +166,7 @@ namespace RouteCycle.Factories
         /// </summary>
         /// <param name="index">Index of OutputFeedback</param>
         /// <returns></returns>
-        public CustomRouteCycleDeviceCollection GetOutputFeedback(int index)
+        public CustomDeviceCollectionWithFeedback GetCustomRouteCycleDeviceCollectionInstance(int index)
         {
             return _destinationFeedbacks[index];
         }
@@ -160,11 +175,22 @@ namespace RouteCycle.Factories
         /// Manually set OutputFeedback, requires full OutputFeedback object w/ three params
         /// </summary>
         /// <param name="feedback">Complex object w/ bool IndexEnabled, ushort IndexValue, string IndexLabel</param>
-        public void SetOutputFeedback(CustomRouteCycleDeviceCollection feedback)
+        public void SetCustomRouteCycleDeviceCollectionInstance(CustomDeviceCollectionWithFeedback feedback)
         {
             var item = _destinationFeedbacks[feedback.Index];
             item.IndexEnabled = feedback.IndexEnabled;
             item.IndexValue = feedback.IndexValue;
+        }
+
+        /// <summary>
+        /// Void method that updates Feedbacks which updates Bridge
+        /// </summary>
+        private void UpdateFeedbacks()
+        {
+            foreach (var item in _destinationFeedbacks)
+                item.Feedback.FireUpdate();
+            foreach (var item in _destinationFeedbacks)
+                item.FeedbackInteger.FireUpdate();
         }
         #endregion
     }
@@ -172,30 +198,65 @@ namespace RouteCycle.Factories
     /// <summary>
     /// OutputFeedback custom object to define array of outputs on bridge
     /// </summary>
-    public class CustomRouteCycleDeviceCollection
+    public class CustomDeviceCollectionWithFeedback
     {
+        private bool _boolValue;
+        private ushort _intValue;
+        public readonly BoolFeedback Feedback;
+        public readonly IntFeedback FeedbackInteger;
         public ushort Index { get; set; }
-        public bool IndexEnabled { get; set; }
-        public ushort IndexValue { get; set; }
+        public bool IndexEnabled 
+        { 
+            get 
+            {
+                return _boolValue;
+            } 
+            set 
+            {
+                _boolValue = value;
+                Feedback.FireUpdate();
+            }
+        }
+        public ushort IndexValue
+        {
+            get
+            {
+                return _intValue;
+            }
+            set
+            {
+                _intValue = value;
+                FeedbackInteger.FireUpdate();
+            }
+        }
         public ushort ShiftedIndex { get; set; }
         public ushort ShiftedIndexValue { get; set; }
 
-        // This method sets the value of the IndexEnabled property
+        /// <summary>
+        /// 
+        /// </summary>
+        public CustomDeviceCollectionWithFeedback()
+        {
+            Feedback = new BoolFeedback(() => _boolValue);
+            FeedbackInteger = new IntFeedback(() => _intValue);
+        }
+
+        // Method sets the value of the IndexEnabled property
         public void SetIndexEnabled(bool enabled){
             IndexEnabled = enabled; 
         }
 
-        // This method sets the value of the IndexValue property
+        // Method sets the value of the IndexValue property
         public void SetIndexValue(ushort value){
             IndexValue = value;
         }
 
-        // Returns the IndexValue property ushort value
+        // Method returns the IndexValue property ushort value
         public ushort FireIndexValueUpdate(){
             return IndexValue;
         }
 
-        // Returns the IndexEbabled property bool value
+        // Method returns the IndexEbabled property bool value
         public bool FireIndexEnabledUpdate()
         {
             return IndexEnabled;
