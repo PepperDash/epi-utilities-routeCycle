@@ -219,7 +219,7 @@ namespace RouteCycle.Factories
     }
 
     /// <summary>
-    /// OutputFeedback custom object to define array of outputs on bridge
+    /// Custom device collection to define array of outputs on bridge
     /// </summary>
     public class CustomDeviceCollectionWithFeedback
     {
@@ -255,9 +255,6 @@ namespace RouteCycle.Factories
         public ushort ShiftedIndex { get; set; }
         public ushort ShiftedIndexValue { get; set; }
 
-        /// <summary>
-        /// 
-        /// </summary>
         public CustomDeviceCollectionWithFeedback()
         {
             FeedbackBoolean = new BoolFeedback(() => _boolValue);
