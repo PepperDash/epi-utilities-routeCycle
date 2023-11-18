@@ -21,7 +21,20 @@
         "type": "routeCycle",
         "group": "switcher",
         "parentDeviceKey": "processor",
-        "properties": {}
+        "properties": {
+          "parentDeviceKey": "processor",
+          "control": {
+            "method": "tcpIp",
+            "tcpSshProperties": {
+              "address": "",
+              "port": 23,
+              "autoReconnect": true,
+              "autoReconnectIntervalMs": 10000,
+              "username": "",
+              "password": ""
+            }
+          }
+        }
       },
       {
         "key": "autoRouteBridge",

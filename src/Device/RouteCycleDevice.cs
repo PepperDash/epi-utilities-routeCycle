@@ -51,7 +51,10 @@ namespace RouteCycle.Factories
                 _sourceFeedbacks.Add(new CustomDeviceCollectionWithFeedback
                 {
                     Index = i,
-                    IndexEnabled = false
+                    IndexEnabled = false,
+                    IndexValue = 0,
+                    ShiftedIndex = 0,
+                    ShiftedIndexValue = 0
                 });
             }
         }
@@ -90,28 +93,40 @@ namespace RouteCycle.Factories
 
             foreach (var kvp in _destinationFeedbacks)
             {
-                // Get the actual join number of the signal
-                var destinationSelectJoin = kvp.Index + joinMap.DestinationSelect.JoinNumber - 1;
-                // Link incoming from SIMPL EISC bridge (aka route request) to internal method
-                trilist.SetBoolSigAction(destinationSelectJoin, (input) => { kvp.IndexEnabled = input; });
-                trilist.SetUShortSigAction(destinationSelectJoin, (input) => { kvp.IndexValue = input; });
+                // Create a copy of the loop variable
+                // Note: If you don't assign a local var within foreach loop the lambda will use the last value
+                // assigned to kvp, which will be the last item in the _sourceFeedbacks lists
+                var localKvp = kvp;
 
-                var feedbackEnabled = kvp.FeedbackBoolean;
+                // Get the actual join number of the signal
+                var destinationSelectJoin = localKvp.Index + joinMap.DestinationSelect.JoinNumber;
+                // Link incoming from SIMPL EISC bridge (aka route request) to internal method
+                trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
+                trilist.SetUShortSigAction(destinationSelectJoin, (input) => { localKvp.IndexValue = input; });
+
+                var feedbackEnabled = localKvp.FeedbackBoolean;
                 if (feedbackEnabled == null) continue;
                 feedbackEnabled.LinkInputSig(trilist.BooleanInput[destinationSelectJoin]);
-                var feedbackIndex = kvp.FeedbackInteger;
+
+                var feedbackIndex = localKvp.FeedbackInteger;
                 if (feedbackIndex == null) continue;
                 feedbackIndex.LinkInputSig(trilist.UShortInput[destinationSelectJoin]);
             }
 
-            foreach (var kvp in _destinationFeedbacks)
+            foreach (var kvp in _sourceFeedbacks)
             {
-                // Get the actual join number of the signal
-                var sourceSelectJoin = kvp.Index + joinMap.SourceSelect.JoinNumber - 1;
-                // Link incoming from SIMPL EISC bridge to internal method
-                trilist.SetBoolSigAction(sourceSelectJoin, (input) => { kvp.IndexEnabled = input; });
+                // Create a copy of the loop variable
+                // Note: If you don't assign a local var within foreach loop the lambda will use the last value
+                // assigned to kvp, which will be the last item in the _sourceFeedbacks list
+                var localKvp = kvp;
 
-                var feedbackEnabled = kvp.FeedbackBoolean;
+                // Get the actual join number of the signal
+                var sourceSelectJoin = localKvp.Index + joinMap.SourceSelect.JoinNumber;
+                Debug.Console(1, "LTA FE _sourceFeedbacks sourceSelectionJoin = {0}", sourceSelectJoin);
+                // Link incoming from SIMPL EISC bridge to internal method
+                trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
+
+                var feedbackEnabled = localKvp.FeedbackBoolean;
                 if (feedbackEnabled == null) continue;
                 feedbackEnabled.LinkInputSig(trilist.BooleanInput[sourceSelectJoin]);
             }
