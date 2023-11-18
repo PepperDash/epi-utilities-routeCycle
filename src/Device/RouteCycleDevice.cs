@@ -10,7 +10,7 @@ using RouteCycle.JoinMaps;
 namespace RouteCycle.Factories
 {
 	/// <summary>
-	/// Plugin device template for logic devices that don't communicate outside the program
+	/// Plugin device for logic devices that don't communicate outside the program
 	/// </summary>
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
@@ -86,7 +86,6 @@ namespace RouteCycle.Factories
             // Device joinMap triggers and feedback
             trilist.SetSigTrueAction(joinMap.InUse.JoinNumber, _setInUseStateTrue);
             trilist.SetSigFalseAction(joinMap.InUse.JoinNumber, _setInUseStateFalse);
-
             trilist.SetSigTrueAction(joinMap.CycleRoute.JoinNumber, CycleRoute);
             trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _setSourceEnablesClear);
             trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
@@ -122,7 +121,6 @@ namespace RouteCycle.Factories
 
                 // Get the actual join number of the signal
                 var sourceSelectJoin = localKvp.Index + joinMap.SourceSelect.JoinNumber;
-                Debug.Console(1, "LTA FE _sourceFeedbacks sourceSelectionJoin = {0}", sourceSelectJoin);
                 // Link incoming from SIMPL EISC bridge to internal method
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
 
@@ -251,7 +249,13 @@ namespace RouteCycle.Factories
             } 
             set 
             {
-                _boolValue = value;
+                // Only toggle the value if the incoming value is true
+                if (value == true)
+                {
+                    _boolValue = !_boolValue;
+                    FeedbackBoolean.FireUpdate();
+                    return;
+                }
                 FeedbackBoolean.FireUpdate();
             }
         }
@@ -295,48 +299,6 @@ namespace RouteCycle.Factories
         public bool FireIndexEnabledUpdate()
         {
             return IndexEnabled;
-        }
-    }
-
-    public class TrackableArray<T>
-    {
-        private T[] array;
-        public int LastChangedIndex { get; private set; }
-
-        public TrackableArray(int size)
-        {
-            array = new T[size];
-            LastChangedIndex = -1;  // -1 indicates no changes made yet
-        }
-
-        public T this[int index]
-        {
-            get { return array[index]; }
-            set
-            {
-                if (!array[index].Equals(value)) // Check if the value is actually changing
-                {
-                    array[index] = value;
-                    LastChangedIndex = index; // Update the last changed index
-                }
-            }
-        }
-
-        // This method exists only if T is bool
-        public void SetBoolean(int index, bool value)
-        {
-            if (typeof(T) == typeof(bool))
-            {
-                if (!Equals(array[index], value)) // Compare current value with new value
-                {
-                    array[index] = (T)(object)value; // Cast bool to T (since T is bool)
-                    LastChangedIndex = index; // Update the last changed index
-                }
-            }
-            else
-            {
-                throw new System.Exception("SetBoolean method can only be used with TrackableArray of type bool.");
-            }
         }
     }
 }
