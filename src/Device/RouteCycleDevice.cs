@@ -171,6 +171,9 @@ namespace RouteCycle.Factories
         /// </summary>
         private void CycleRoute()
         {
+            if (!_inUse)
+                return;
+
             /// First loop
             for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
             {
@@ -191,7 +194,7 @@ namespace RouteCycle.Factories
                     var shiftedItem = _destinationFeedbacks[current.ShiftedIndex];
                     shiftedItem.IndexValue = current.IndexValue;
                 }
-            }
+            }  
         }
 
         /// <summary>
