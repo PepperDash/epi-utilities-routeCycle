@@ -153,6 +153,20 @@ namespace RouteCycle.JoinMaps
 
 		// TODO [x] Add analog joins below plugin being developed
 
+        [JoinName("destinationRouteIn")]
+        public JoinDataComplete DestinationRouteIn = new JoinDataComplete(
+            new JoinData
+            {
+                JoinNumber = 1,
+                JoinSpan = 32
+            },
+            new JoinMetadata
+            {
+                Description = "Routed Destination Source Value",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Analog
+            });
+
         [JoinName("destinationRouteOut")]
         public JoinDataComplete DestinationRouteOut = new JoinDataComplete(
             new JoinData

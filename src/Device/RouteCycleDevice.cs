@@ -101,7 +101,9 @@ namespace RouteCycle.Factories
                 var destinationSelectJoin = localKvp.Index + joinMap.DestinationSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge (aka route request) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
-                trilist.SetUShortSigAction(destinationSelectJoin, (input) => { localKvp.IndexValue = input; });
+
+                var DestinationRouteJoin = localKvp.Index + joinMap.DestinationRouteIn.JoinNumber;
+                trilist.SetUShortSigAction(DestinationRouteJoin, (input) => { localKvp.IndexValue = input; });
 
                 var feedbackEnabled = localKvp.FeedbackBoolean;
                 if (feedbackEnabled == null) continue;
@@ -109,7 +111,7 @@ namespace RouteCycle.Factories
 
                 var feedbackIndex = localKvp.FeedbackInteger;
                 if (feedbackIndex == null) continue;
-                feedbackIndex.LinkInputSig(trilist.UShortInput[destinationSelectJoin]);
+                feedbackIndex.LinkInputSig(trilist.UShortInput[DestinationRouteJoin]);
             }
 
             foreach (var kvp in _sourceFeedbacks)
