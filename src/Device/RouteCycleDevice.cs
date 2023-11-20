@@ -15,9 +15,9 @@ namespace RouteCycle.Factories
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
         private int maxIO = 32;
+        private bool _inUse { get; set; }
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
         private List<CustomDeviceCollectionWithFeedback> _sourceFeedbacks { get; set; }
-        private bool _inUse { get; set; }
 
         /// <summary>
         /// Plugin device constructor
@@ -84,17 +84,16 @@ namespace RouteCycle.Factories
             Debug.Console(0, "Linking to Bridge Type {0}", GetType().Name);
 
             // Device joinMap triggers and feedback
-            trilist.SetSigTrueAction(joinMap.InUse.JoinNumber, _setInUseStateTrue);
-            trilist.SetSigFalseAction(joinMap.InUse.JoinNumber, _setInUseStateFalse);
+            trilist.SetBoolSigAction(joinMap.InUse.JoinNumber, (input) => { _inUse = input; });
             trilist.SetSigTrueAction(joinMap.CycleRoute.JoinNumber, CycleRoute);
             trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _setSourceEnablesClear);
             trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
 
             foreach (var kvp in _destinationFeedbacks)
             {
-                // Create a copy of the loop variable
-                // Note: If you don't assign a local var within foreach loop the lambda will use the last value
-                // assigned to kvp, which will be the last item in the _sourceFeedbacks lists
+                // Create a local copy of the loop variable
+                // Note: If you don't assign a local variable within the foreach loop the lambda will use the last value
+                // assigned to the variable, which will be the last item of the foreach loop.
                 var localKvp = kvp;
 
                 // Get the actual join number of the signal
@@ -102,13 +101,15 @@ namespace RouteCycle.Factories
                 // Link incoming from SIMPL EISC bridge (aka route request) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
 
-                var DestinationRouteJoin = localKvp.Index + joinMap.DestinationRouteIn.JoinNumber;
-                trilist.SetUShortSigAction(DestinationRouteJoin, (input) => { localKvp.IndexValue = input; });
-
                 var feedbackEnabled = localKvp.FeedbackBoolean;
                 if (feedbackEnabled == null) continue;
                 feedbackEnabled.LinkInputSig(trilist.BooleanInput[destinationSelectJoin]);
 
+                // Get the actual join number of the signal
+                var DestinationRouteJoin = localKvp.Index + joinMap.DestinationRouteOut.JoinNumber;
+                trilist.SetUShortSigAction(DestinationRouteJoin, (input) => { localKvp.IndexValue = input; });
+
+                // Link outbound SIMPL EISC bridge signal from internal method
                 var feedbackIndex = localKvp.FeedbackInteger;
                 if (feedbackIndex == null) continue;
                 feedbackIndex.LinkInputSig(trilist.UShortInput[DestinationRouteJoin]);
@@ -116,9 +117,9 @@ namespace RouteCycle.Factories
 
             foreach (var kvp in _sourceFeedbacks)
             {
-                // Create a copy of the loop variable
-                // Note: If you don't assign a local var within foreach loop the lambda will use the last value
-                // assigned to kvp, which will be the last item in the _sourceFeedbacks list
+                // Create a local copy of the loop variable
+                // Note: If you don't assign a local variable within the foreach loop the lambda will use the last value
+                // assigned to the variable, which will be the last item of the foreach loop.
                 var localKvp = kvp;
 
                 // Get the actual join number of the signal
@@ -126,9 +127,19 @@ namespace RouteCycle.Factories
                 // Link incoming from SIMPL EISC bridge to internal method
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
 
+                // Link inbound SIMPL EISC bridge signal to internal method
                 var feedbackEnabled = localKvp.FeedbackBoolean;
                 if (feedbackEnabled == null) continue;
                 feedbackEnabled.LinkInputSig(trilist.BooleanInput[sourceSelectJoin]);
+
+                // Get the actual join number of the signal
+                var SourceInputValueJoin = localKvp.Index + joinMap.SourceInputValue.JoinNumber;
+                trilist.SetUShortSigAction(SourceInputValueJoin, (input) => { localKvp.IndexValue = input; });
+
+                // Link inbound SIMPL EISC bridge signal to internal method
+                var feedbackIndex = localKvp.FeedbackInteger;
+                if (feedbackIndex == null) continue;
+                feedbackIndex.LinkInputSig(trilist.UShortInput[SourceInputValueJoin]);
             }
 
             UpdateFeedbacks();
@@ -141,10 +152,6 @@ namespace RouteCycle.Factories
         }
         #endregion
         #region customDeviceLogic
-
-        // Set _inUse state
-        private void _setInUseStateTrue(){ _inUse = true; }
-        private void _setInUseStateFalse() { _inUse = false; }
 
         // Set all Souces Enable booleans to false
         private void _setSourceEnablesClear()
@@ -173,29 +180,42 @@ namespace RouteCycle.Factories
         /// </summary>
         private void CycleRoute()
         {
+            Debug.Console(0, this, "CycleRoute called-init");
             if (!_inUse)
                 return;
+            Debug.Console(0, this, "CycleRoute called-pass");
 
             /// First loop
-            for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
+            for (int i = 1; i < _destinationFeedbacks.Count; i++)
             {
                 var current = _destinationFeedbacks[i];
                 var next = _destinationFeedbacks[i + 1];
+                Debug.Console(2, this, "--------------------");
+                Debug.Console(2, this, "FL: Count: {0}", i);
                 if (current.IndexEnabled)
                 {
+                    Debug.Console(2, this, "FL: current.IndexValue = {0}", current.IndexValue);
                     current.ShiftedIndexValue = next.IndexValue;
+                    Debug.Console(2, this, "FL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
                 }
+                Debug.Console(2, this, "--------------------");
             }
 
             /// Second loop
-            for (int i = 0; i < _destinationFeedbacks.Count; i++)
+            for (int i = 1; i < _destinationFeedbacks.Count; i++)
             {
                 var current = _destinationFeedbacks[i];
+
+                Debug.Console(2, this, "--------------------");
+                Debug.Console(2, this, "SL: current = {0}", current);
                 if (current.IndexEnabled)
                 {
                     var shiftedItem = _destinationFeedbacks[current.ShiftedIndex];
+                    Debug.Console(2, this, "SL: current.IndexValue = {0}", current.IndexValue);
                     shiftedItem.IndexValue = current.IndexValue;
+                    Debug.Console(2, this, "SL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
                 }
+                Debug.Console(2, this, "--------------------");
             }  
         }
 
