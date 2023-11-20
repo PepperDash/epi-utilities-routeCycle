@@ -252,6 +252,8 @@ namespace RouteCycle.Factories
                 item.FeedbackInteger.FireUpdate();
             foreach (var item in _sourceFeedbacks)
                 item.FeedbackBoolean.FireUpdate();
+            foreach (var item in _sourceFeedbacks)
+                item.FeedbackInteger.FireUpdate();
         }
         #endregion
     }
