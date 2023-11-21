@@ -180,13 +180,14 @@ namespace RouteCycle.Factories
         /// </summary>
         private void CycleRoute()
         {
-            Debug.Console(0, this, "CycleRoute called-init");
             if (!_inUse)
+            {
+                Debug.Console(2, this, "CycleRoute called while device InUse not set");
                 return;
-            Debug.Console(0, this, "CycleRoute called-pass");
+            }
 
             /// First loop
-            for (int i = 1; i < _destinationFeedbacks.Count; i++)
+            for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
             {
                 var current = _destinationFeedbacks[i];
                 var next = _destinationFeedbacks[i + 1];
@@ -198,16 +199,14 @@ namespace RouteCycle.Factories
                     current.ShiftedIndexValue = next.IndexValue;
                     Debug.Console(2, this, "FL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
                 }
-                Debug.Console(2, this, "--------------------");
             }
 
             /// Second loop
-            for (int i = 1; i < _destinationFeedbacks.Count; i++)
+            for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
             {
                 var current = _destinationFeedbacks[i];
 
                 Debug.Console(2, this, "--------------------");
-                Debug.Console(2, this, "SL: current = {0}", current);
                 if (current.IndexEnabled)
                 {
                     var shiftedItem = _destinationFeedbacks[current.ShiftedIndex];
@@ -215,7 +214,6 @@ namespace RouteCycle.Factories
                     shiftedItem.IndexValue = current.IndexValue;
                     Debug.Console(2, this, "SL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
                 }
-                Debug.Console(2, this, "--------------------");
             }  
         }
 
