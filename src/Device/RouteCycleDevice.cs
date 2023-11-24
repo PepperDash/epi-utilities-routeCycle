@@ -33,7 +33,7 @@ namespace RouteCycle.Factories
             _sourceFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
 
             // Initialize the _destinationFeedbacks collection
-            for (ushort i = 0; i < maxIO; i++)
+            for (ushort i = 1; i < maxIO; i++)
             {
                 _destinationFeedbacks.Add(new CustomDeviceCollectionWithFeedback
                 {
@@ -46,7 +46,7 @@ namespace RouteCycle.Factories
             }
 
             // Initialize the _sourceFeedbacks collection
-            for (ushort i = 0; i < maxIO; i++)
+            for (ushort i = 1; i < maxIO; i++)
             {
                 _sourceFeedbacks.Add(new CustomDeviceCollectionWithFeedback
                 {
@@ -98,9 +98,10 @@ namespace RouteCycle.Factories
 
                 // Get the actual join number of the signal
                 var destinationSelectJoin = localKvp.Index + joinMap.DestinationSelect.JoinNumber;
-                // Link incoming from SIMPL EISC bridge (aka route request) to internal method
+                // Link incoming from SIMPL EISC bridge (AKA destination select) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
 
+                // Link outbound SIMPL EISC bridge signal from internal method
                 var feedbackEnabled = localKvp.FeedbackBoolean;
                 if (feedbackEnabled == null) continue;
                 feedbackEnabled.LinkInputSig(trilist.BooleanInput[destinationSelectJoin]);
@@ -186,6 +187,15 @@ namespace RouteCycle.Factories
                 return;
             }
 
+            var DestinationEnabledCount = ReturnDestinationCountEnabled();
+            var SourceEnabledCount = ReturnSourceCountEnabled();
+
+            if (SourceEnabledCount < DestinationEnabledCount) //Source count must be >= Destination count
+            {
+                Debug.Console(2, this, "Source count invalid while CycleRoute called. Source count must be greater than or equal to Destination count.");
+                return;
+            }
+
             /// First loop
             for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
             {
@@ -218,12 +228,42 @@ namespace RouteCycle.Factories
         }
 
         /// <summary>
+        /// Call to return count of DestinationFeedbacks enabled
+        /// </summary>
+        /// <returns>INT count of destinations enabled</returns>
+        private int ReturnDestinationCountEnabled()
+        {
+            var count = 0;
+            foreach(var kvp in _destinationFeedbacks)
+            {
+                if (kvp.IndexEnabled)
+                    count = count + 1;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Call to return count of SourceFeedbacks enabled
+        /// </summary>
+        /// <returns>INT count of sources enabled</returns>
+        private int ReturnSourceCountEnabled()
+        {
+            var count = 0;
+            foreach (var kvp in _sourceFeedbacks)
+            {
+                if (kvp.IndexEnabled)
+                    count = count + 1;
+            }
+            return count;
+        }
+
+        /// <summary>
         /// Retuns object at specific index containing three params
         /// within single object called OutputFeedback
         /// </summary>
         /// <param name="index">Index of OutputFeedback</param>
         /// <returns></returns>
-        public CustomDeviceCollectionWithFeedback GetCustomDeviceCollectionInstance(int index)
+        private CustomDeviceCollectionWithFeedback GetCustomDeviceCollectionInstance(int index)
         {
             return _destinationFeedbacks[index];
         }
@@ -232,7 +272,7 @@ namespace RouteCycle.Factories
         /// Manually set OutputFeedback, requires full OutputFeedback object w/ three params
         /// </summary>
         /// <param name="feedback">Complex object w/ bool IndexEnabled, ushort IndexValue, string IndexLabel</param>
-        public void SetCustomDeviceCollectionInstance(CustomDeviceCollectionWithFeedback feedback)
+        private void SetCustomDeviceCollectionInstance(CustomDeviceCollectionWithFeedback feedback)
         {
             var item = _destinationFeedbacks[feedback.Index];
             item.IndexEnabled = feedback.IndexEnabled;
@@ -324,6 +364,63 @@ namespace RouteCycle.Factories
         public bool FireIndexEnabledUpdate()
         {
             return IndexEnabled;
+        }
+    }
+
+    /// <summary>
+    /// Custom device collection to define array of outputs on bridge
+    /// </summary>
+    public class CustomDeviceCollection
+    {
+        private ushort _indexValue;
+        private ushort _routeValue;
+
+        public ushort Index
+        {
+            get
+            {
+                return _indexValue;
+            }
+            set
+            {
+                _indexValue = value;
+            }
+        }
+
+        public ushort Route
+        {
+            get
+            {
+                return _routeValue;
+            }
+            set
+            {
+                _routeValue = value;
+            }
+        }
+
+        // Method sets the value of the IndexValue property
+        public void SetIndex(ushort value)
+        {
+            _indexValue = value;
+        }
+
+        // Method sets the value of the IndexValue property
+        public void SetRoute(ushort value)
+        {
+            _routeValue = value;
+        }
+
+        // Method returns the IndexValue property ushort value
+        public ushort FireIndexUpdate()
+        {
+            return _indexValue;
+        }
+
+        // Method returns the IndexValue property ushort value
+        public ushort FireRouteUpdate()
+        {
+            return _routeValue;
         }
     }
 }
