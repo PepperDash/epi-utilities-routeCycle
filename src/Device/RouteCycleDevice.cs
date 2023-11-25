@@ -142,6 +142,7 @@ namespace RouteCycle.Factories
                 
                 localKvp.OnIndexEnabledTrueChanged += HandleSourceIndexEnabledTrueChanged;
                 localKvp.OnIndexEnabledFalseChanged += HandleSourceIndexEnabledFalseChanged;
+                localKvp.OnIndexValueChanged += HandleSourceIndexValueChanged;
 
                 // Link inbound SIMPL EISC bridge signal to internal method
                 var feedbackEnabled = localKvp.FeedbackBoolean;
@@ -199,6 +200,12 @@ namespace RouteCycle.Factories
         private void HandleSourceIndexEnabledFalseChanged(ushort index)
         {
             _sourceDevice.RemoveAt(index);
+        }
+
+        // Method to handle the event
+        private void HandleSourceIndexValueChanged(ushort index, ushort indexValue)
+        {
+            _sourceDevice[index].Route = indexValue;
         }
 
         // Set all Souces Enable booleans to false
@@ -336,6 +343,7 @@ namespace RouteCycle.Factories
         public readonly BoolFeedback FeedbackBoolean;
         public readonly IntFeedback FeedbackInteger;
         public event Action<ushort, ushort> OnIndexEnabledTrueChanged;
+        public event Action<ushort, ushort> OnIndexValueChanged;
         public event Action<ushort> OnIndexEnabledFalseChanged;
         public ushort Index { get; set; }
         public bool IndexEnabled 
@@ -371,6 +379,8 @@ namespace RouteCycle.Factories
             {
                 _intValue = value;
                 FeedbackInteger.FireUpdate();
+                if (OnIndexValueChanged != null)
+                    OnIndexValueChanged(this.Index, value); 
             }
         }
         public ushort ShiftedIndex { get; set; }
@@ -414,26 +424,14 @@ namespace RouteCycle.Factories
 
         public ushort Index
         {
-            get
-            {
-                return _indexValue;
-            }
-            set
-            {
-                _indexValue = value;
-            }
+            get { return _indexValue; }
+            set { _indexValue = value; }
         }
 
         public ushort Route
         {
-            get
-            {
-                return _routeValue;
-            }
-            set
-            {
-                _routeValue = value;
-            }
+            get { return _routeValue; }
+            set { _routeValue = value; }
         }
 
         // Method sets the value of the IndexValue property
