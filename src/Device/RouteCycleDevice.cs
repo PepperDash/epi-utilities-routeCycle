@@ -5,6 +5,7 @@ using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using System.Collections.Generic;
 using System.Threading;
+using System;
 using RouteCycle.JoinMaps;
 
 namespace RouteCycle.Factories
@@ -18,6 +19,38 @@ namespace RouteCycle.Factories
         private bool _inUse { get; set; }
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
         private List<CustomDeviceCollectionWithFeedback> _sourceFeedbacks { get; set; }
+        private List<CustomDeviceCollection> _destinationDevice { get; set; }
+        private List<CustomDeviceCollection> _sourceDevice { get; set; }
+        public Action<ushort, ushort> AddSourceDevice;
+        public Action<ushort> RemoveSourceDevice;
+        public Action<ushort, ushort> AddDestinationDevice;
+        public Action<ushort> RemoveDestinationDevice;
+       
+        
+        //public Action<ushort, ushort> AddSourceDevice = (ushortIndexValue, ushortRouteValue) =>
+        //{
+        //    _sourceDevice.Add(new CustomDeviceCollection
+        //    {
+        //        Index = ushortIndexValue,
+        //        Route = ushortRouteValue
+        //    });
+        //};
+        //public Action<ushort> RemoveSourceDevice = (ushortIndexValue) =>
+        //{
+        //    _sourceDevice.RemoveAt(ushortIndexValue);
+        //};
+        //public Action<ushort, ushort> AddDestinationDevice = (ushortIndexValue, ushortRouteValue) =>
+        //{
+        //    _sourceDevice.Add(new CustomDeviceCollection
+        //    {
+        //        Index = ushortIndexValue,
+        //        Route = ushortRouteValue
+        //    });
+        //};
+        //public Action<ushort> RemoveDestinationDevice = (ushortIndexValue) =>
+        //{
+        //    _destinationDevice.RemoveAt(ushortIndexValue);
+        //};
 
         /// <summary>
         /// Plugin device constructor
@@ -31,6 +64,8 @@ namespace RouteCycle.Factories
             Debug.Console(0, this, "Constructing new {0} instance", name);
             _destinationFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
             _sourceFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
+            _sourceDevice = new List<CustomDeviceCollection>();
+            _destinationDevice = new List<CustomDeviceCollection>();
 
             // Initialize the _destinationFeedbacks collection
             for (ushort i = 1; i < maxIO; i++)
@@ -89,6 +124,16 @@ namespace RouteCycle.Factories
             trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _setSourceEnablesClear);
             trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
 
+            // Now, you can assign the lambda expression to the AddSourceDevice delegate
+            AddSourceDevice = (ushortIndexValue, ushortRouteValue) =>
+            {
+                _sourceDevice.Add(new CustomDeviceCollection
+                {
+                    Index = ushortIndexValue,
+                    Route = ushortRouteValue
+                });
+            };
+
             foreach (var kvp in _destinationFeedbacks)
             {
                 // Create a local copy of the loop variable
@@ -127,6 +172,8 @@ namespace RouteCycle.Factories
                 var sourceSelectJoin = localKvp.Index + joinMap.SourceSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge to internal method
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
+
+                //trilist.SetUShortSigAction(sourceSelectJoin, (input) => { _addSourceDevice(input); });
 
                 // Link inbound SIMPL EISC bridge signal to internal method
                 var feedbackEnabled = localKvp.FeedbackBoolean;
@@ -187,8 +234,8 @@ namespace RouteCycle.Factories
                 return;
             }
 
-            var DestinationEnabledCount = ReturnDestinationCountEnabled();
-            var SourceEnabledCount = ReturnSourceCountEnabled();
+            var DestinationEnabledCount = GetDestinationCountEnabled();
+            var SourceEnabledCount = GetSourceCountEnabled();
 
             if (SourceEnabledCount < DestinationEnabledCount) //Source count must be >= Destination count
             {
@@ -231,7 +278,7 @@ namespace RouteCycle.Factories
         /// Call to return count of DestinationFeedbacks enabled
         /// </summary>
         /// <returns>INT count of destinations enabled</returns>
-        private int ReturnDestinationCountEnabled()
+        private int GetDestinationCountEnabled()
         {
             var count = 0;
             foreach(var kvp in _destinationFeedbacks)
@@ -246,7 +293,7 @@ namespace RouteCycle.Factories
         /// Call to return count of SourceFeedbacks enabled
         /// </summary>
         /// <returns>INT count of sources enabled</returns>
-        private int ReturnSourceCountEnabled()
+        private int GetSourceCountEnabled()
         {
             var count = 0;
             foreach (var kvp in _sourceFeedbacks)
