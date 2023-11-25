@@ -17,7 +17,6 @@ namespace RouteCycle.Factories
     {
         private int maxIO = 32;
         private int targetSource;
-        private int targetDestination;
         private bool _inUse { get; set; }
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
         private List<CustomDeviceCollectionWithFeedback> _sourceFeedbacks { get; set; }
@@ -39,7 +38,6 @@ namespace RouteCycle.Factories
             _sourceDevice = new List<CustomDeviceCollection>();
             _destinationDevice = new List<CustomDeviceCollection>();
             targetSource = 0;
-            targetDestination = 0;
 
             // Initialize the _destinationFeedbacks collection
             for (ushort i = 1; i < maxIO; i++)
