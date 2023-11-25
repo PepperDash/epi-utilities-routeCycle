@@ -4,9 +4,9 @@ using PepperDash.Core;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using System.Collections.Generic;
+using RouteCycle.JoinMaps;
 using System.Threading;
 using System;
-using RouteCycle.JoinMaps;
 
 namespace RouteCycle.Factories
 {
@@ -16,41 +16,13 @@ namespace RouteCycle.Factories
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
         private int maxIO = 32;
+        private int targetSource;
+        private int targetDestination;
         private bool _inUse { get; set; }
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
         private List<CustomDeviceCollectionWithFeedback> _sourceFeedbacks { get; set; }
         private List<CustomDeviceCollection> _destinationDevice { get; set; }
         private List<CustomDeviceCollection> _sourceDevice { get; set; }
-        public Action<ushort, ushort> AddSourceDevice;
-        public Action<ushort> RemoveSourceDevice;
-        public Action<ushort, ushort> AddDestinationDevice;
-        public Action<ushort> RemoveDestinationDevice;
-       
-        
-        //public Action<ushort, ushort> AddSourceDevice = (ushortIndexValue, ushortRouteValue) =>
-        //{
-        //    _sourceDevice.Add(new CustomDeviceCollection
-        //    {
-        //        Index = ushortIndexValue,
-        //        Route = ushortRouteValue
-        //    });
-        //};
-        //public Action<ushort> RemoveSourceDevice = (ushortIndexValue) =>
-        //{
-        //    _sourceDevice.RemoveAt(ushortIndexValue);
-        //};
-        //public Action<ushort, ushort> AddDestinationDevice = (ushortIndexValue, ushortRouteValue) =>
-        //{
-        //    _sourceDevice.Add(new CustomDeviceCollection
-        //    {
-        //        Index = ushortIndexValue,
-        //        Route = ushortRouteValue
-        //    });
-        //};
-        //public Action<ushort> RemoveDestinationDevice = (ushortIndexValue) =>
-        //{
-        //    _destinationDevice.RemoveAt(ushortIndexValue);
-        //};
 
         /// <summary>
         /// Plugin device constructor
@@ -66,6 +38,8 @@ namespace RouteCycle.Factories
             _sourceFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
             _sourceDevice = new List<CustomDeviceCollection>();
             _destinationDevice = new List<CustomDeviceCollection>();
+            targetSource = 0;
+            targetDestination = 0;
 
             // Initialize the _destinationFeedbacks collection
             for (ushort i = 1; i < maxIO; i++)
@@ -124,16 +98,6 @@ namespace RouteCycle.Factories
             trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _setSourceEnablesClear);
             trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
 
-            // Now, you can assign the lambda expression to the AddSourceDevice delegate
-            AddSourceDevice = (ushortIndexValue, ushortRouteValue) =>
-            {
-                _sourceDevice.Add(new CustomDeviceCollection
-                {
-                    Index = ushortIndexValue,
-                    Route = ushortRouteValue
-                });
-            };
-
             foreach (var kvp in _destinationFeedbacks)
             {
                 // Create a local copy of the loop variable
@@ -145,6 +109,9 @@ namespace RouteCycle.Factories
                 var destinationSelectJoin = localKvp.Index + joinMap.DestinationSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge (AKA destination select) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
+
+                localKvp.OnIndexEnabledTrueChanged += HandleDestinationIndexEnabledTrueChanged;
+                localKvp.OnIndexEnabledFalseChanged += HandleDestinationIndexEnabledFalseChanged;
 
                 // Link outbound SIMPL EISC bridge signal from internal method
                 var feedbackEnabled = localKvp.FeedbackBoolean;
@@ -172,8 +139,9 @@ namespace RouteCycle.Factories
                 var sourceSelectJoin = localKvp.Index + joinMap.SourceSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge to internal method
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
-
-                //trilist.SetUShortSigAction(sourceSelectJoin, (input) => { _addSourceDevice(input); });
+                
+                localKvp.OnIndexEnabledTrueChanged += HandleSourceIndexEnabledTrueChanged;
+                localKvp.OnIndexEnabledFalseChanged += HandleSourceIndexEnabledFalseChanged;
 
                 // Link inbound SIMPL EISC bridge signal to internal method
                 var feedbackEnabled = localKvp.FeedbackBoolean;
@@ -200,6 +168,38 @@ namespace RouteCycle.Factories
         }
         #endregion
         #region customDeviceLogic
+
+        // Method to handle the event
+        private void HandleDestinationIndexEnabledTrueChanged(ushort index, ushort indexValue)
+        {
+            _destinationDevice.Add(new CustomDeviceCollection
+            {
+                Index = index,
+                Route = indexValue
+            });
+        }
+
+        // Method to handle the event
+        private void HandleDestinationIndexEnabledFalseChanged(ushort index)
+        {
+            _destinationDevice.RemoveAt(index);
+        }
+
+        // Method to handle the event
+        private void HandleSourceIndexEnabledTrueChanged(ushort index, ushort indexValue)
+        {
+            _sourceDevice.Add(new CustomDeviceCollection
+            {
+                Index = index,
+                Route = indexValue
+            });
+        }
+
+        // Method to handle the event
+        private void HandleSourceIndexEnabledFalseChanged(ushort index)
+        {
+            _sourceDevice.RemoveAt(index);
+        }
 
         // Set all Souces Enable booleans to false
         private void _setSourceEnablesClear()
@@ -234,74 +234,57 @@ namespace RouteCycle.Factories
                 return;
             }
 
-            var DestinationEnabledCount = GetDestinationCountEnabled();
-            var SourceEnabledCount = GetSourceCountEnabled();
-
-            if (SourceEnabledCount < DestinationEnabledCount) //Source count must be >= Destination count
+            if ((_sourceDevice.Count == 0) || (_destinationDevice.Count == 0)) //Source and Destination count must be greater than 0
             {
-                Debug.Console(2, this, "Source count invalid while CycleRoute called. Source count must be greater than or equal to Destination count.");
+                Debug.Console(2, this, "Source or destination count invalid while CycleRoute called. Source count = {0}, destination count = {1}.", _sourceDevice.Count, _destinationDevice.Count);
                 return;
             }
 
-            /// First loop
-            for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
+            for (int i = 0; i < _destinationDevice.Count; i++)
             {
-                var current = _destinationFeedbacks[i];
-                var next = _destinationFeedbacks[i + 1];
-                Debug.Console(2, this, "--------------------");
-                Debug.Console(2, this, "FL: Count: {0}", i);
-                if (current.IndexEnabled)
+                _destinationDevice[i].Route = _sourceDevice[targetSource].Route;
+                var nextTargetSource = targetSource++;
+                if (nextTargetSource != null)
                 {
-                    Debug.Console(2, this, "FL: current.IndexValue = {0}", current.IndexValue);
-                    current.ShiftedIndexValue = next.IndexValue;
-                    Debug.Console(2, this, "FL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
+                    targetSource++;
+                    continue;
+                }
+                else
+                {
+                    targetSource = 0;
                 }
             }
+                
 
-            /// Second loop
-            for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
-            {
-                var current = _destinationFeedbacks[i];
+            ///// First loop
+            //for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
+            //{
+            //    var current = _destinationFeedbacks[i];
+            //    var next = _destinationFeedbacks[i + 1];
+            //    Debug.Console(2, this, "--------------------");
+            //    Debug.Console(2, this, "FL: Count: {0}", i);
+            //    if (current.IndexEnabled)
+            //    {
+            //        Debug.Console(2, this, "FL: current.IndexValue = {0}", current.IndexValue);
+            //        current.ShiftedIndexValue = next.IndexValue;
+            //        Debug.Console(2, this, "FL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
+            //    }
+            //}
 
-                Debug.Console(2, this, "--------------------");
-                if (current.IndexEnabled)
-                {
-                    var shiftedItem = _destinationFeedbacks[current.ShiftedIndex];
-                    Debug.Console(2, this, "SL: current.IndexValue = {0}", current.IndexValue);
-                    shiftedItem.IndexValue = current.IndexValue;
-                    Debug.Console(2, this, "SL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
-                }
-            }  
-        }
+            ///// Second loop
+            //for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
+            //{
+            //    var current = _destinationFeedbacks[i];
 
-        /// <summary>
-        /// Call to return count of DestinationFeedbacks enabled
-        /// </summary>
-        /// <returns>INT count of destinations enabled</returns>
-        private int GetDestinationCountEnabled()
-        {
-            var count = 0;
-            foreach(var kvp in _destinationFeedbacks)
-            {
-                if (kvp.IndexEnabled)
-                    count = count + 1;
-            }
-            return count;
-        }
-
-        /// <summary>
-        /// Call to return count of SourceFeedbacks enabled
-        /// </summary>
-        /// <returns>INT count of sources enabled</returns>
-        private int GetSourceCountEnabled()
-        {
-            var count = 0;
-            foreach (var kvp in _sourceFeedbacks)
-            {
-                if (kvp.IndexEnabled)
-                    count = count + 1;
-            }
-            return count;
+            //    Debug.Console(2, this, "--------------------");
+            //    if (current.IndexEnabled)
+            //    {
+            //        var shiftedItem = _destinationFeedbacks[current.ShiftedIndex];
+            //        Debug.Console(2, this, "SL: current.IndexValue = {0}", current.IndexValue);
+            //        shiftedItem.IndexValue = current.IndexValue;
+            //        Debug.Console(2, this, "SL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
+            //    }
+            //}  
         }
 
         /// <summary>
@@ -344,7 +327,7 @@ namespace RouteCycle.Factories
     }
 
     /// <summary>
-    /// Custom device collection to define array of outputs on bridge
+    /// Custom device collection to define & update input and output arrays on bridge
     /// </summary>
     public class CustomDeviceCollectionWithFeedback
     {
@@ -352,6 +335,8 @@ namespace RouteCycle.Factories
         private ushort _intValue;
         public readonly BoolFeedback FeedbackBoolean;
         public readonly IntFeedback FeedbackInteger;
+        public event Action<ushort, ushort> OnIndexEnabledTrueChanged;
+        public event Action<ushort> OnIndexEnabledFalseChanged;
         public ushort Index { get; set; }
         public bool IndexEnabled 
         { 
@@ -365,8 +350,13 @@ namespace RouteCycle.Factories
                 if (value == true)
                 {
                     _boolValue = !_boolValue;
-                    FeedbackBoolean.FireUpdate();
-                    return;
+                    if (OnIndexEnabledTrueChanged != null)
+                        OnIndexEnabledTrueChanged(this.Index, this.IndexValue);
+                }
+                if (value == false)
+                {
+                    if (OnIndexEnabledFalseChanged != null)
+                        OnIndexEnabledFalseChanged(this.Index);
                 }
                 FeedbackBoolean.FireUpdate();
             }
@@ -415,7 +405,7 @@ namespace RouteCycle.Factories
     }
 
     /// <summary>
-    /// Custom device collection to define array of outputs on bridge
+    /// Custom device collection of arrays
     /// </summary>
     public class CustomDeviceCollection
     {
