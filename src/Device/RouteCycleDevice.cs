@@ -6,6 +6,7 @@ using PepperDash.Essentials.Core.Bridges;
 using System.Collections.Generic;
 using RouteCycle.JoinMaps;
 using System.Threading;
+using System.Linq;
 using System;
 
 namespace RouteCycle.Factories
@@ -42,7 +43,7 @@ namespace RouteCycle.Factories
             _targetSource = 0;
 
             // Initialize the _destinationFeedbacks collection
-            for (ushort i = 1; i < _maxIO; i++)
+            for (ushort i = 0; i < _maxIO; i++)
             {
                 _destinationFeedbacks.Add(new CustomDeviceCollectionWithFeedback
                 {
@@ -55,7 +56,7 @@ namespace RouteCycle.Factories
             }
 
             // Initialize the _sourceFeedbacks collection
-            for (ushort i = 1; i < _maxIO; i++)
+            for (ushort i = 0; i < _maxIO; i++)
             {
                 _sourceFeedbacks.Add(new CustomDeviceCollectionWithFeedback
                 {
@@ -97,8 +98,8 @@ namespace RouteCycle.Factories
             trilist.SetSigTrueAction(joinMap.CycleRoute.JoinNumber, CycleRoute);
             trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _setSourceEnablesClear);
             trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
-            _reportNotifyFeedback.LinkInputSig(trilist.BooleanInput[joinMap.ReportNotifyPulse.JoinNumber]);
-            _reportNotifyMessageFeedback.LinkInputSig(trilist.StringInput[joinMap.ReportNotifyMessage.JoinNumber]);
+            //_reportNotifyFeedback.LinkInputSig(trilist.BooleanInput[joinMap.ReportNotifyPulse.JoinNumber]);
+            //_reportNotifyMessageFeedback.LinkInputSig(trilist.StringInput[joinMap.ReportNotifyMessage.JoinNumber]);
 
             foreach (var kvp in _destinationFeedbacks)
             {
@@ -175,39 +176,79 @@ namespace RouteCycle.Factories
         // Method to handle the event
         private void handleDestinationIndexEnabledTrueChanged(ushort index, ushort indexValue)
         {
-            _destinationDevice.Add(new CustomDeviceCollection
+            // Search for an existing CustomDeviceCollection with the specified Index
+            var existingItem = _destinationDevice.FirstOrDefault(item => item.Index == index);
+
+            if (existingItem != null)
             {
-                Index = index,
-                Route = indexValue
-            });
+                // An item with the desired index already exists, so you might want to update it
+                existingItem.Route = indexValue;
+            }
+            else
+            {
+                // No item with the desired index exists, so add a new one to the list
+                _destinationDevice.Add(new CustomDeviceCollection
+                {
+                    Index = index,
+                    Route = indexValue
+                });
+            }
         }
 
         // Method to handle the event
         private void handleDestinationIndexEnabledFalseChanged(ushort index)
         {
-            _destinationDevice.RemoveAt(index);
+            RemoveDeviceByIndex(_destinationDevice, index);
         }
 
         // Method to handle the event
         private void handleSourceIndexEnabledTrueChanged(ushort index, ushort indexValue)
         {
-            _sourceDevice.Add(new CustomDeviceCollection
+            // Search for an existing CustomDeviceCollection with the specified Index
+            var existingItem = _sourceDevice.FirstOrDefault(item => item.Index == index);
+
+            if (existingItem != null)
             {
-                Index = index,
-                Route = indexValue
-            });
+                // An item with the desired index already exists, so you might want to update it
+                existingItem.Route = indexValue;
+            }
+            else
+            {
+                // No item with the desired index exists, so add a new one to the list
+                _sourceDevice.Add(new CustomDeviceCollection
+                {
+                    Index = index,
+                    Route = indexValue
+                });
+            }
         }
 
         // Method to handle the event
         private void handleSourceIndexEnabledFalseChanged(ushort index)
         {
-            _sourceDevice.RemoveAt(index);
+            RemoveDeviceByIndex(_sourceDevice, index);
         }
 
         // Method to handle the event
         private void handleSourceIndexValueChanged(ushort index, ushort indexValue)
         {
-            _sourceDevice[index].Route = indexValue;
+            // Search for an existing CustomDeviceCollection with the specified Index
+            var existingItem = _sourceDevice.FirstOrDefault(item => item.Index == index);
+
+            if (existingItem != null)
+            {
+                // An item with the desired index already exists, so you might want to update it
+                existingItem.Route = indexValue;
+            }
+            else
+            {
+                // No item with the desired index exists, so add a new one to the list
+                _sourceDevice.Add(new CustomDeviceCollection
+                {
+                    Index = index,
+                    Route = indexValue
+                });
+            }
         }
 
         // Method to trigger the Show Message
@@ -223,6 +264,18 @@ namespace RouteCycle.Factories
         {
             _reportNotifyMessageFeedback.SetTestValue(text);
             handleShowMessage();
+        }
+
+        private void RemoveDeviceByIndex(List<CustomDeviceCollection> deviceList, ushort index)
+        {
+            // Find the item in the list with the matching Index
+            var itemToRemove = deviceList.Find(item => item.Index == index);
+
+            // If an item was found, remove it from the list
+            if (itemToRemove != null)
+            {
+                deviceList.Remove(itemToRemove);
+            }
         }
 
         // Set all Souces Enable booleans to false
