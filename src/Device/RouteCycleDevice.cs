@@ -15,13 +15,15 @@ namespace RouteCycle.Factories
 	/// </summary>
 	public class RouteCycleDevice : EssentialsBridgeableDevice
     {
-        private int maxIO = 32;
-        private int targetSource;
+        private int _maxIO = 32;
+        private int _targetSource;
         private bool _inUse { get; set; }
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
         private List<CustomDeviceCollectionWithFeedback> _sourceFeedbacks { get; set; }
         private List<CustomDeviceCollection> _destinationDevice { get; set; }
         private List<CustomDeviceCollection> _sourceDevice { get; set; }
+        private BoolFeedback _reportNotifyFeedback { get; set; }
+        private StringFeedback _reportNotifyMessageFeedback { get; set; }
 
         /// <summary>
         /// Plugin device constructor
@@ -37,10 +39,10 @@ namespace RouteCycle.Factories
             _sourceFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
             _sourceDevice = new List<CustomDeviceCollection>();
             _destinationDevice = new List<CustomDeviceCollection>();
-            targetSource = 0;
+            _targetSource = 0;
 
             // Initialize the _destinationFeedbacks collection
-            for (ushort i = 1; i < maxIO; i++)
+            for (ushort i = 1; i < _maxIO; i++)
             {
                 _destinationFeedbacks.Add(new CustomDeviceCollectionWithFeedback
                 {
@@ -53,7 +55,7 @@ namespace RouteCycle.Factories
             }
 
             // Initialize the _sourceFeedbacks collection
-            for (ushort i = 1; i < maxIO; i++)
+            for (ushort i = 1; i < _maxIO; i++)
             {
                 _sourceFeedbacks.Add(new CustomDeviceCollectionWithFeedback
                 {
@@ -95,6 +97,8 @@ namespace RouteCycle.Factories
             trilist.SetSigTrueAction(joinMap.CycleRoute.JoinNumber, CycleRoute);
             trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _setSourceEnablesClear);
             trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
+            _reportNotifyFeedback.LinkInputSig(trilist.BooleanInput[joinMap.ReportNotifyPulse.JoinNumber]);
+            _reportNotifyMessageFeedback.LinkInputSig(trilist.StringInput[joinMap.ReportNotifyMessage.JoinNumber]);
 
             foreach (var kvp in _destinationFeedbacks)
             {
@@ -108,8 +112,8 @@ namespace RouteCycle.Factories
                 // Link incoming from SIMPL EISC bridge (AKA destination select) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
 
-                localKvp.OnIndexEnabledTrueChanged += HandleDestinationIndexEnabledTrueChanged;
-                localKvp.OnIndexEnabledFalseChanged += HandleDestinationIndexEnabledFalseChanged;
+                localKvp.OnIndexEnabledTrueChanged += handleDestinationIndexEnabledTrueChanged;
+                localKvp.OnIndexEnabledFalseChanged += handleDestinationIndexEnabledFalseChanged;
 
                 // Link outbound SIMPL EISC bridge signal from internal method
                 var feedbackEnabled = localKvp.FeedbackBoolean;
@@ -138,9 +142,9 @@ namespace RouteCycle.Factories
                 // Link incoming from SIMPL EISC bridge to internal method
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
                 
-                localKvp.OnIndexEnabledTrueChanged += HandleSourceIndexEnabledTrueChanged;
-                localKvp.OnIndexEnabledFalseChanged += HandleSourceIndexEnabledFalseChanged;
-                localKvp.OnIndexValueChanged += HandleSourceIndexValueChanged;
+                localKvp.OnIndexEnabledTrueChanged += handleSourceIndexEnabledTrueChanged;
+                localKvp.OnIndexEnabledFalseChanged += handleSourceIndexEnabledFalseChanged;
+                localKvp.OnIndexValueChanged += handleSourceIndexValueChanged;
 
                 // Link inbound SIMPL EISC bridge signal to internal method
                 var feedbackEnabled = localKvp.FeedbackBoolean;
@@ -169,7 +173,7 @@ namespace RouteCycle.Factories
         #region customDeviceLogic
 
         // Method to handle the event
-        private void HandleDestinationIndexEnabledTrueChanged(ushort index, ushort indexValue)
+        private void handleDestinationIndexEnabledTrueChanged(ushort index, ushort indexValue)
         {
             _destinationDevice.Add(new CustomDeviceCollection
             {
@@ -179,13 +183,13 @@ namespace RouteCycle.Factories
         }
 
         // Method to handle the event
-        private void HandleDestinationIndexEnabledFalseChanged(ushort index)
+        private void handleDestinationIndexEnabledFalseChanged(ushort index)
         {
             _destinationDevice.RemoveAt(index);
         }
 
         // Method to handle the event
-        private void HandleSourceIndexEnabledTrueChanged(ushort index, ushort indexValue)
+        private void handleSourceIndexEnabledTrueChanged(ushort index, ushort indexValue)
         {
             _sourceDevice.Add(new CustomDeviceCollection
             {
@@ -195,21 +199,36 @@ namespace RouteCycle.Factories
         }
 
         // Method to handle the event
-        private void HandleSourceIndexEnabledFalseChanged(ushort index)
+        private void handleSourceIndexEnabledFalseChanged(ushort index)
         {
             _sourceDevice.RemoveAt(index);
         }
 
         // Method to handle the event
-        private void HandleSourceIndexValueChanged(ushort index, ushort indexValue)
+        private void handleSourceIndexValueChanged(ushort index, ushort indexValue)
         {
             _sourceDevice[index].Route = indexValue;
+        }
+
+        // Method to trigger the Show Message
+        private void handleShowMessage()
+        {
+            _reportNotifyFeedback.SetTestValue(true);
+            CrestronEnvironment.Sleep(500);
+            _reportNotifyFeedback.SetTestValue(false);
+        }
+
+        // Method to handle updating the Report Notify Message
+        private void handlePropagateNotifyMessage(string text)
+        {
+            _reportNotifyMessageFeedback.SetTestValue(text);
+            handleShowMessage();
         }
 
         // Set all Souces Enable booleans to false
         private void _setSourceEnablesClear()
         {
-            for (ushort i = 0; i < (maxIO - 1); i++) {
+            for (ushort i = 0; i < (_maxIO - 1); i++) {
                 _sourceFeedbacks[i].IndexEnabled = false;
             }
         }
@@ -217,7 +236,7 @@ namespace RouteCycle.Factories
         // Set all Destinations.IndexEnabled to false 
         private void _setDestinationEnablesClear()
         {
-            for (ushort i = 0; i < (maxIO - 1); i++)
+            for (ushort i = 0; i < (_maxIO - 1); i++)
             {
                 _destinationFeedbacks[i].IndexEnabled = false;
             }
@@ -236,27 +255,29 @@ namespace RouteCycle.Factories
             if (!_inUse)
             {
                 Debug.Console(2, this, "CycleRoute called while device InUse not set");
+                handlePropagateNotifyMessage("CycleRoute called while device InUse not set");
                 return;
             }
 
             if ((_sourceDevice.Count == 0) || (_destinationDevice.Count == 0)) //Source and Destination count must be greater than 0
             {
                 Debug.Console(2, this, "Source or destination count invalid while CycleRoute called. Source count = {0}, destination count = {1}.", _sourceDevice.Count, _destinationDevice.Count);
+                handlePropagateNotifyMessage("Source or destination count invalid while CycleRoute called.");
                 return;
             }
 
             for (int i = 0; i < _destinationDevice.Count; i++)
             {
-                _destinationDevice[i].Route = _sourceDevice[targetSource].Route;
-                var nextTargetSource = targetSource++;
-                if (nextTargetSource != null)
+                _destinationDevice[i].Route = _sourceDevice[_targetSource].Route;
+                var nextTargetSource = _targetSource++;
+                if (nextTargetSource < _sourceDevice.Count)
                 {
-                    targetSource++;
+                    _targetSource++;
                     continue;
                 }
                 else
                 {
-                    targetSource = 0;
+                    _targetSource = 0;
                 }
             }
                 
