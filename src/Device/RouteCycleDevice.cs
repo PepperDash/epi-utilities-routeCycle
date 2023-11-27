@@ -145,7 +145,7 @@ namespace RouteCycle.Factories
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
                 
                 localKvp.OnIndexEnabledTrueChanged += handleSourceIndexEnabledTrueChanged;
-                localKvp.OnIndexEnabledFalseChanged += handleSourceIndexEnabledFalseChanged;
+                //localKvp.OnIndexEnabledFalseChanged += handleSourceIndexEnabledFalseChanged;
                 localKvp.OnIndexValueChanged += handleSourceIndexValueChanged;
 
                 // Link inbound SIMPL EISC bridge signal to internal method
@@ -198,6 +198,7 @@ namespace RouteCycle.Factories
                 foreach (var kvp in _destinationDevice)
                 {
                     Debug.Console(2, this, @"
+---
 Item Index =  {0},
 Item Route Value = {1},
 --- 
@@ -215,6 +216,7 @@ Item Route Value = {1},
             foreach (var kvp in _destinationDevice)
             {
                 Debug.Console(2, this, @"
+---
 Item Index =  {0},
 Item Route Value = {1},
 --- 
@@ -248,6 +250,7 @@ Item Route Value = {1},
             foreach(var kvp in _sourceDevice)
             {
                 Debug.Console(2, this, @"
+---
 Item Index =  {0},
 Item Route Value = {1},
 --- 
@@ -263,6 +266,8 @@ Item Route Value = {1},
             foreach (var kvp in _sourceDevice)
             {
                 Debug.Console(2, this, @"
+
+---
 Item Index =  {0},
 Item Route Value = {1},
 --- 
@@ -468,17 +473,7 @@ Item Route Value = {1},
                     _boolValue = !_boolValue;
                 
                 FeedbackBoolean.FireUpdate();
-                
-                if (_boolValue)
-                {
-                    if (OnIndexEnabledTrueChanged != null)
-                        OnIndexEnabledTrueChanged(this.Index, this.IndexValue);
-                }
-                if (!_boolValue)
-                {
-                    if (OnIndexEnabledFalseChanged != null)
-                        OnIndexEnabledFalseChanged(this.Index);
-                }
+                FireIndexEnableUpdate();
             }
         }
         public ushort IndexValue
@@ -504,6 +499,21 @@ Item Route Value = {1},
             FeedbackInteger = new IntFeedback(() => _intValue);
         }
 
+        private void FireIndexEnableUpdate()
+        {
+            if (_boolValue)
+            {
+                if (OnIndexEnabledTrueChanged != null)
+                    OnIndexEnabledTrueChanged(this.Index, this.IndexValue);
+                return;
+            }
+            else if (!_boolValue)
+            {
+                if (OnIndexEnabledFalseChanged != null)
+                    OnIndexEnabledFalseChanged(this.Index);
+            }
+        }
+        
         // Method sets the value of the IndexEnabled property
         public void SetIndexEnabled(bool enabled){
             IndexEnabled = enabled; 
