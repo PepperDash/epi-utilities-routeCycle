@@ -100,6 +100,7 @@ namespace RouteCycle.Factories
             trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
             //_reportNotifyFeedback.LinkInputSig(trilist.BooleanInput[joinMap.ReportNotifyPulse.JoinNumber]);
             //_reportNotifyMessageFeedback.LinkInputSig(trilist.StringInput[joinMap.ReportNotifyMessage.JoinNumber]);
+            //_sourceFeedbacks.OnIndexValueChanged += handleSourceIndexValueChanged;
 
             foreach (var kvp in _destinationFeedbacks)
             {
@@ -171,7 +172,7 @@ namespace RouteCycle.Factories
             };
         }
         #endregion
-        #region customDeviceLogic
+        #region customDeviceMethods
 
         // Method to handle the event
         private void handleDestinationIndexEnabledTrueChanged(ushort index, ushort indexValue)
@@ -192,13 +193,33 @@ namespace RouteCycle.Factories
                     Index = index,
                     Route = indexValue
                 });
+
+                Debug.Console(2, this, "hSIETC, _destubatuibDevice List Count = {0}", _destinationDevice.Count);
+                foreach (var kvp in _destinationDevice)
+                {
+                    Debug.Console(2, this, @"
+Item Index =  {0},
+Item Route Value = {1},
+--- 
+", kvp.Index, kvp.Route);
+                }
             }
+
         }
 
         // Method to handle the event
         private void handleDestinationIndexEnabledFalseChanged(ushort index)
         {
             RemoveDeviceByIndex(_destinationDevice, index);
+            Debug.Console(2, this, "hSIETC, _destubatuibDevice List Count = {0}", _destinationDevice.Count);
+            foreach (var kvp in _destinationDevice)
+            {
+                Debug.Console(2, this, @"
+Item Index =  {0},
+Item Route Value = {1},
+--- 
+", kvp.Index, kvp.Route);
+            }
         }
 
         // Method to handle the event
@@ -211,9 +232,11 @@ namespace RouteCycle.Factories
             {
                 // An item with the desired index already exists, so you might want to update it
                 existingItem.Route = indexValue;
+                Debug.Console(2, this, "hSIETC, existing source w/ index: {0} found, updating w/ route value: {1}", index, indexValue);
             }
             else
             {
+                Debug.Console(2, this, "hSIETC, creating source item w/ index: {0}, and route value: {1}", index, indexValue);
                 // No item with the desired index exists, so add a new one to the list
                 _sourceDevice.Add(new CustomDeviceCollection
                 {
@@ -221,12 +244,30 @@ namespace RouteCycle.Factories
                     Route = indexValue
                 });
             }
+            Debug.Console(2, this, "hSIETC, _sourceDevice List Count = {0}", _sourceDevice.Count);
+            foreach(var kvp in _sourceDevice)
+            {
+                Debug.Console(2, this, @"
+Item Index =  {0},
+Item Route Value = {1},
+--- 
+", kvp.Index, kvp.Route);
+            }
         }
 
         // Method to handle the event
         private void handleSourceIndexEnabledFalseChanged(ushort index)
         {
             RemoveDeviceByIndex(_sourceDevice, index);
+            Debug.Console(2, this, "hSIETC, _sourceDevice List Count = {0}", _sourceDevice.Count);
+            foreach (var kvp in _sourceDevice)
+            {
+                Debug.Console(2, this, @"
+Item Index =  {0},
+Item Route Value = {1},
+--- 
+", kvp.Index, kvp.Route);
+            }
         }
 
         // Method to handle the event
@@ -242,12 +283,8 @@ namespace RouteCycle.Factories
             }
             else
             {
-                // No item with the desired index exists, so add a new one to the list
-                _sourceDevice.Add(new CustomDeviceCollection
-                {
-                    Index = index,
-                    Route = indexValue
-                });
+                // No item with the desired index exists and a new one should not be created, so return
+                return;
             }
         }
 
@@ -428,17 +465,20 @@ namespace RouteCycle.Factories
             {
                 // Only toggle the value if the incoming value is true
                 if (value == true)
-                {
                     _boolValue = !_boolValue;
+                
+                FeedbackBoolean.FireUpdate();
+                
+                if (_boolValue)
+                {
                     if (OnIndexEnabledTrueChanged != null)
                         OnIndexEnabledTrueChanged(this.Index, this.IndexValue);
                 }
-                if (value == false)
+                if (!_boolValue)
                 {
                     if (OnIndexEnabledFalseChanged != null)
                         OnIndexEnabledFalseChanged(this.Index);
                 }
-                FeedbackBoolean.FireUpdate();
             }
         }
         public ushort IndexValue
