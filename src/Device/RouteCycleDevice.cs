@@ -19,6 +19,8 @@ namespace RouteCycle.Factories
         private int _maxIO = 32;
         private int _targetSource;
         private bool _inUse { get; set; }
+        private bool _reportNotifyMessageTrigger { get; set; }
+        private string _reportNofityMessage {get; set; }
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
         private List<CustomDeviceCollectionWithFeedback> _sourceFeedbacks { get; set; }
         private List<CustomDeviceCollection> _destinationDevice { get; set; }
@@ -36,6 +38,8 @@ namespace RouteCycle.Factories
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
+            _reportNotifyFeedback = new BoolFeedback(() => _reportNotifyMessageTrigger);
+            _reportNotifyMessageFeedback = new StringFeedback(() => _reportNofityMessage);
             _destinationFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
             _sourceFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
             _sourceDevice = new List<CustomDeviceCollection>();
@@ -96,11 +100,10 @@ namespace RouteCycle.Factories
             // Device joinMap triggers and feedback
             trilist.SetBoolSigAction(joinMap.InUse.JoinNumber, (input) => { _inUse = input; });
             trilist.SetSigTrueAction(joinMap.CycleRoute.JoinNumber, CycleRoute);
-            trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _setSourceEnablesClear);
-            trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _setDestinationEnablesClear);
-            //_reportNotifyFeedback.LinkInputSig(trilist.BooleanInput[joinMap.ReportNotifyPulse.JoinNumber]);
-            //_reportNotifyMessageFeedback.LinkInputSig(trilist.StringInput[joinMap.ReportNotifyMessage.JoinNumber]);
-            //_sourceFeedbacks.OnIndexValueChanged += handleSourceIndexValueChanged;
+            trilist.SetSigTrueAction(joinMap.SourcesClear.JoinNumber, _clearAllSourceEnables);
+            trilist.SetSigTrueAction(joinMap.DestinationsClear.JoinNumber, _clearAllDestinationEnables);
+            _reportNotifyFeedback.LinkInputSig(trilist.BooleanInput[joinMap.ReportNotifyPulse.JoinNumber]);
+            _reportNotifyMessageFeedback.LinkInputSig(trilist.StringInput[joinMap.ReportNotifyMessage.JoinNumber]);
 
             #region _destinationFeedbacks
             foreach (var kvp in _destinationFeedbacks)
@@ -148,7 +151,7 @@ namespace RouteCycle.Factories
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
                 
                 localKvp.OnIndexEnabledTrueChanged += handleSourceIndexEnabledTrueChanged;
-                //localKvp.OnIndexEnabledFalseChanged += handleSourceIndexEnabledFalseChanged;
+                localKvp.OnIndexEnabledFalseChanged += handleSourceIndexEnabledFalseChanged;
                 localKvp.OnIndexValueChanged += handleSourceIndexValueChanged;
 
                 // Link inbound SIMPL EISC bridge signal to internal method
@@ -198,7 +201,7 @@ namespace RouteCycle.Factories
                     Route = indexValue
                 });
 
-                Debug.Console(2, this, "hSIETC, _destubatuibDevice List Count = {0}", _destinationDevice.Count);
+                Debug.Console(2, this, "_destubatuibDevice List Count = {0}", _destinationDevice.Count);
                 foreach (var kvp in _destinationDevice)
                 {
                     Debug.Console(2, this, @"
@@ -216,7 +219,7 @@ Item Route Value = {1},
         private void handleDestinationIndexEnabledFalseChanged(ushort index)
         {
             RemoveDeviceByIndex(_destinationDevice, index);
-            Debug.Console(2, this, "hSIETC, _destubatuibDevice List Count = {0}", _destinationDevice.Count);
+            Debug.Console(2, this, "_destinationDevice List Count = {0}", _destinationDevice.Count);
             foreach (var kvp in _destinationDevice)
             {
                 Debug.Console(2, this, @"
@@ -238,11 +241,11 @@ Item Route Value = {1},
             {
                 // An item with the desired index already exists, so you might want to update it
                 existingItem.Route = indexValue;
-                Debug.Console(2, this, "hSIETC, existing source w/ index: {0} found, updating w/ route value: {1}", index, indexValue);
+                Debug.Console(2, this, "Existing source w/ index: {0} found, updating w/ route value: {1}", index, indexValue);
             }
             else
             {
-                Debug.Console(2, this, "hSIETC, creating source item w/ index: {0}, and route value: {1}", index, indexValue);
+                Debug.Console(2, this, "creating source item w/ index: {0}, and route value: {1}", index, indexValue);
                 // No item with the desired index exists, so add a new one to the list
                 _sourceDevice.Add(new CustomDeviceCollection
                 {
@@ -250,7 +253,7 @@ Item Route Value = {1},
                     Route = indexValue
                 });
             }
-            Debug.Console(2, this, "hSIETC, _sourceDevice List Count = {0}", _sourceDevice.Count);
+            Debug.Console(2, this, "_sourceDevice List Count = {0}", _sourceDevice.Count);
             foreach(var kvp in _sourceDevice)
             {
                 Debug.Console(2, this, @"
@@ -266,7 +269,7 @@ Item Route Value = {1},
         private void handleSourceIndexEnabledFalseChanged(ushort index)
         {
             RemoveDeviceByIndex(_sourceDevice, index);
-            Debug.Console(2, this, "hSIETC, _sourceDevice List Count = {0}", _sourceDevice.Count);
+            Debug.Console(2, this, "_sourceDevice List Count = {0}", _sourceDevice.Count);
             foreach (var kvp in _sourceDevice)
             {
                 Debug.Console(2, this, @"
@@ -306,12 +309,17 @@ Item Route Value = {1},
         }
 
         // Method to handle updating the Report Notify Message
-        private void handlePropagateNotifyMessage(string text)
+        private void handleReportNotifyMessage(string text)
         {
             _reportNotifyMessageFeedback.SetTestValue(text);
             handleShowMessage();
         }
 
+        /// <summary>
+        /// Removes device in the Custom Device Collection list by index
+        /// </summary>
+        /// <param name="deviceList">Collection name</param>
+        /// <param name="index">Ushort index value specific to the device</param>
         private void RemoveDeviceByIndex(List<CustomDeviceCollection> deviceList, ushort index)
         {
             // Find the item in the list with the matching Index
@@ -325,16 +333,20 @@ Item Route Value = {1},
         }
 
         // Set all Souces Enable booleans to false
-        private void _setSourceEnablesClear()
+        private void _clearAllSourceEnables()
         {
+            var message = "Clearing all Enabled Sources...";
+            handleReportNotifyMessage(message);
             for (ushort i = 0; i < (_maxIO - 1); i++) {
                 _sourceFeedbacks[i].IndexEnabled = false;
             }
         }
 
         // Set all Destinations.IndexEnabled to false 
-        private void _setDestinationEnablesClear()
+        private void _clearAllDestinationEnables()
         {
+            var message = "Clearing all Enabled Destinations...";
+            handleReportNotifyMessage(message);
             for (ushort i = 0; i < (_maxIO - 1); i++)
             {
                 _destinationFeedbacks[i].IndexEnabled = false;
@@ -354,14 +366,14 @@ Item Route Value = {1},
             if (!_inUse)
             {
                 Debug.Console(2, this, "CycleRoute called while device InUse not set");
-                handlePropagateNotifyMessage("CycleRoute called while device InUse not set");
+                handleReportNotifyMessage("CycleRoute called while device InUse not set");
                 return;
             }
 
             if ((_sourceDevice.Count == 0) || (_destinationDevice.Count == 0)) //Source and Destination count must be greater than 0
             {
                 Debug.Console(2, this, "Source or destination count invalid while CycleRoute called. Source count = {0}, destination count = {1}.", _sourceDevice.Count, _destinationDevice.Count);
-                handlePropagateNotifyMessage("Source or destination count invalid while CycleRoute called.");
+                handleReportNotifyMessage("Source or destination count invalid while CycleRoute called.");
                 return;
             }
 
@@ -488,6 +500,7 @@ Item Route Value = {1},
         public ushort ShiftedIndex { get; set; }
         public ushort ShiftedIndexValue { get; set; }
 
+        // Default constructor
         public CustomDeviceCollectionWithFeedback()
         {
             FeedbackBoolean = new BoolFeedback(() => _boolValue);
@@ -523,13 +536,11 @@ Item Route Value = {1},
     {
         private ushort _indexValue;
         private ushort _routeValue;
-
         public ushort Index
         {
             get { return _indexValue; }
             set { _indexValue = value; }
         }
-
         public ushort Route
         {
             get { return _routeValue; }
