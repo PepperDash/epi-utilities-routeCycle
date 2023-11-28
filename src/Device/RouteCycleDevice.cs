@@ -338,7 +338,8 @@ Item Route Value = {1},
             var message = "Clearing all Enabled Sources...";
             handleReportNotifyMessage(message);
             for (ushort i = 0; i < (_maxIO - 1); i++) {
-                _sourceFeedbacks[i].IndexEnabled = false;
+                if(_sourceFeedbacks[i].IndexEnabled)
+                    _sourceFeedbacks[i].IndexEnabled = true;
             }
         }
 
@@ -349,7 +350,8 @@ Item Route Value = {1},
             handleReportNotifyMessage(message);
             for (ushort i = 0; i < (_maxIO - 1); i++)
             {
-                _destinationFeedbacks[i].IndexEnabled = false;
+                if(_destinationFeedbacks[i].IndexEnabled)
+                    _destinationFeedbacks[i].IndexEnabled = true;
             }
         }
 
