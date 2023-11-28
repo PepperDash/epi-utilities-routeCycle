@@ -102,6 +102,7 @@ namespace RouteCycle.Factories
             //_reportNotifyMessageFeedback.LinkInputSig(trilist.StringInput[joinMap.ReportNotifyMessage.JoinNumber]);
             //_sourceFeedbacks.OnIndexValueChanged += handleSourceIndexValueChanged;
 
+            #region _destinationFeedbacks
             foreach (var kvp in _destinationFeedbacks)
             {
                 // Create a local copy of the loop variable
@@ -131,7 +132,9 @@ namespace RouteCycle.Factories
                 if (feedbackIndex == null) continue;
                 feedbackIndex.LinkInputSig(trilist.UShortInput[DestinationRouteJoin]);
             }
+            #endregion 
 
+            #region _sourceFeedbacks
             foreach (var kvp in _sourceFeedbacks)
             {
                 // Create a local copy of the loop variable
@@ -162,6 +165,7 @@ namespace RouteCycle.Factories
                 if (feedbackIndex == null) continue;
                 feedbackIndex.LinkInputSig(trilist.UShortInput[SourceInputValueJoin]);
             }
+            #endregion 
 
             UpdateFeedbacks();
 
@@ -409,28 +413,6 @@ Item Route Value = {1},
         }
 
         /// <summary>
-        /// Retuns object at specific index containing three params
-        /// within single object called OutputFeedback
-        /// </summary>
-        /// <param name="index">Index of OutputFeedback</param>
-        /// <returns></returns>
-        private CustomDeviceCollectionWithFeedback GetCustomDeviceCollectionInstance(int index)
-        {
-            return _destinationFeedbacks[index];
-        }
-
-        /// <summary>
-        /// Manually set OutputFeedback, requires full OutputFeedback object w/ three params
-        /// </summary>
-        /// <param name="feedback">Complex object w/ bool IndexEnabled, ushort IndexValue, string IndexLabel</param>
-        private void SetCustomDeviceCollectionInstance(CustomDeviceCollectionWithFeedback feedback)
-        {
-            var item = _destinationFeedbacks[feedback.Index];
-            item.IndexEnabled = feedback.IndexEnabled;
-            item.IndexValue = feedback.IndexValue;
-        }
-
-        /// <summary>
         /// Void method that updates Feedbacks which updates Bridge
         /// </summary>
         private void UpdateFeedbacks()
@@ -470,10 +452,23 @@ Item Route Value = {1},
             {
                 // Only toggle the value if the incoming value is true
                 if (value == true)
+                {
                     _boolValue = !_boolValue;
-                
-                FeedbackBoolean.FireUpdate();
-                FireIndexEnableUpdate();
+                    FeedbackBoolean.FireUpdate();
+                    if (_boolValue)
+                    {
+                        Debug.Console(2, "CDCWFB, FIEU, _boolValue TRUE");
+                        if (OnIndexEnabledTrueChanged != null)
+                            OnIndexEnabledTrueChanged(this.Index, this.IndexValue);
+                        return;
+                    }
+                    else if (!_boolValue)
+                    {
+                        Debug.Console(2, "CDCWFB, FIEU, _boolValue FALSE");
+                        if (OnIndexEnabledFalseChanged != null)
+                            OnIndexEnabledFalseChanged(this.Index);
+                    }
+                }
             }
         }
         public ushort IndexValue
@@ -497,21 +492,6 @@ Item Route Value = {1},
         {
             FeedbackBoolean = new BoolFeedback(() => _boolValue);
             FeedbackInteger = new IntFeedback(() => _intValue);
-        }
-
-        private void FireIndexEnableUpdate()
-        {
-            if (_boolValue)
-            {
-                if (OnIndexEnabledTrueChanged != null)
-                    OnIndexEnabledTrueChanged(this.Index, this.IndexValue);
-                return;
-            }
-            else if (!_boolValue)
-            {
-                if (OnIndexEnabledFalseChanged != null)
-                    OnIndexEnabledFalseChanged(this.Index);
-            }
         }
         
         // Method sets the value of the IndexEnabled property
