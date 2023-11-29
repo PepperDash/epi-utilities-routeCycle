@@ -390,6 +390,7 @@ Item Route Value = {1},
         /// </summary>
         private void CycleRoute()
         {
+            Debug.Console(2, this, "--RC Triggered--");
             if (!_inUse)
             {
                 Debug.Console(2, this, "CycleRoute called while device InUse not set");
@@ -411,6 +412,7 @@ Item Route Value = {1},
                 // Ensure _targetSource is within the bounds of _sourceDevice before accessing it
                 if (_targetSource >= 0 && _targetSource < _sourceDevice.Count)
                 {
+                    Debug.Console(2, this, "RC: _targetSource = {0}", _targetSource);
                     Debug.Console(2, this, "RC: _sourceDevice[_targetSource].Route = {0}", _sourceDevice[_targetSource].Route);
                     _destinationDevice[i].Route = _sourceDevice[_targetSource].Route;
                 }
@@ -425,6 +427,7 @@ Item Route Value = {1},
 
                 // Increment _targetSource for the next iteration, resetting it to 0 if it exceeds the count
                 _targetSource = (_targetSource + 1) % _sourceDevice.Count;
+                Debug.Console(2, this, "RC: _targetSource incremented or reset, value = {0}", _targetSource);
             }
         }
 
