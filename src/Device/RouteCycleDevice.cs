@@ -381,12 +381,7 @@ Item Route Value = {1},
         }
 
         /// <summary>
-        /// The first loop prepares for the shift by setting up a
-        /// "next value" (ShiftedIndexValue) for each enabled element.
-        /// The second loop executes the shift by updating the actual 
-        /// values (IndexValue and IndexLabel) of elements identified
-        /// by their ShiftedIndex with the values and labels from the 
-        /// current iteration.
+        /// Cycle enabled source routes to enabled destinations
         /// </summary>
         private void CycleRoute()
         {
