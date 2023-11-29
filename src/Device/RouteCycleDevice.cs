@@ -181,15 +181,18 @@ namespace RouteCycle.Factories
         #endregion
         #region customDeviceMethods
 
-        // Method to handle the event
+        /// <summary>
+        /// Handle destination index enabled true
+        /// </summary>
+        /// <param name="index">ushort value</param>
+        /// <param name="indexValue">ushort value</param>
         private void handleDestinationIndexEnabledTrueChanged(ushort index, ushort indexValue)
         {
             // Search for an existing CustomDeviceCollection with the specified Index
             var existingItem = _destinationDevice.FirstOrDefault(item => item.Index == index);
-
             if (existingItem != null)
             {
-                // An item with the desired index already exists, so you might want to update it
+                // An item with the desired index already exists, so update it rather than create it
                 existingItem.Route = indexValue;
             }
             else
@@ -201,7 +204,7 @@ namespace RouteCycle.Factories
                     Route = indexValue
                 });
 
-                Debug.Console(2, this, "_destubatuibDevice List Count = {0}", _destinationDevice.Count);
+                Debug.Console(2, this, "_destinationDevice List Count = {0}", _destinationDevice.Count);
                 foreach (var kvp in _destinationDevice)
                 {
                     Debug.Console(2, this, @"
@@ -215,7 +218,10 @@ Item Route Value = {1},
 
         }
 
-        // Method to handle the event
+        /// <summary>
+        /// Handle destination index enabled false
+        /// </summary>
+        /// <param name="index">ushort value</param>
         private void handleDestinationIndexEnabledFalseChanged(ushort index)
         {
             RemoveDeviceByIndex(_destinationDevice, index);
@@ -231,7 +237,11 @@ Item Route Value = {1},
             }
         }
 
-        // Method to handle the event
+        /// <summary>
+        /// Handle source index enabled true
+        /// </summary>
+        /// <param name="index">ushort value</param>
+        /// <param name="indexValue">ushort value</param>
         private void handleSourceIndexEnabledTrueChanged(ushort index, ushort indexValue)
         {
             // Search for an existing CustomDeviceCollection with the specified Index
@@ -265,7 +275,10 @@ Item Route Value = {1},
             }
         }
 
-        // Method to handle the event
+        /// <summary>
+        /// Handle source index enabled false
+        /// </summary>
+        /// <param name="index">ushort value</param>
         private void handleSourceIndexEnabledFalseChanged(ushort index)
         {
             RemoveDeviceByIndex(_sourceDevice, index);
@@ -282,15 +295,18 @@ Item Route Value = {1},
             }
         }
 
-        // Method to handle the event
+        /// <summary>
+        /// Handle source index value changes
+        /// </summary>
+        /// <param name="index">ushort value</param>
+        /// <param name="indexValue">ushort value</param>
         private void handleSourceIndexValueChanged(ushort index, ushort indexValue)
         {
             // Search for an existing CustomDeviceCollection with the specified Index
             var existingItem = _sourceDevice.FirstOrDefault(item => item.Index == index);
-
             if (existingItem != null)
             {
-                // An item with the desired index already exists, so you might want to update it
+                // An item with the desired index already exists, so update it
                 existingItem.Route = indexValue;
             }
             else
@@ -300,7 +316,9 @@ Item Route Value = {1},
             }
         }
 
-        // Method to trigger the Show Message
+        /// <summary>
+        /// Handle showing the Report Notify Message Pop-up
+        /// </summary>
         private void handleShowMessage()
         {
             _reportNotifyFeedback.SetTestValue(true);
@@ -308,7 +326,10 @@ Item Route Value = {1},
             _reportNotifyFeedback.SetTestValue(false);
         }
 
-        // Method to handle updating the Report Notify Message
+        /// <summary>
+        /// Handle updating the Report Notify Message string content
+        /// </summary>
+        /// <param name="text"></param>
         private void handleReportNotifyMessage(string text)
         {
             _reportNotifyMessageFeedback.SetTestValue(text);
@@ -332,7 +353,9 @@ Item Route Value = {1},
             }
         }
 
-        // Set all Souces Enable booleans to false
+        /// <summary>
+        /// Set all Souces.IndexEnabled to false
+        /// </summary>
         private void _clearAllSourceEnables()
         {
             var message = "Clearing all Enabled Sources...";
@@ -343,7 +366,9 @@ Item Route Value = {1},
             }
         }
 
-        // Set all Destinations.IndexEnabled to false 
+        /// <summary>
+        /// Set all Destinations.IndexEnabled to false 
+        /// </summary>
         private void _clearAllDestinationEnables()
         {
             var message = "Clearing all Enabled Destinations...";
@@ -372,58 +397,35 @@ Item Route Value = {1},
                 return;
             }
 
-            if ((_sourceDevice.Count == 0) || (_destinationDevice.Count == 0)) //Source and Destination count must be greater than 0
+            if (_sourceDevice.Count == 0 || _destinationDevice.Count == 0) // Source and Destination count must be greater than 0
             {
                 Debug.Console(2, this, "Source or destination count invalid while CycleRoute called. Source count = {0}, destination count = {1}.", _sourceDevice.Count, _destinationDevice.Count);
-                handleReportNotifyMessage("Source or destination count invalid while CycleRoute called.");
+                handleReportNotifyMessage("Source or destination count invalid (both must be greater than zero) while CycleRoute called.");
                 return;
             }
 
             for (int i = 0; i < _destinationDevice.Count; i++)
             {
-                _destinationDevice[i].Route = _sourceDevice[_targetSource].Route;
-                var nextTargetSource = _targetSource++;
-                if (nextTargetSource < _sourceDevice.Count)
+                Debug.Console(2, this, "---");
+                Debug.Console(2, this, "RC: i = {0}", i);
+                // Ensure _targetSource is within the bounds of _sourceDevice before accessing it
+                if (_targetSource >= 0 && _targetSource < _sourceDevice.Count)
                 {
-                    _targetSource++;
-                    continue;
+                    Debug.Console(2, this, "RC: _sourceDevice[_targetSource].Route = {0}", _sourceDevice[_targetSource].Route);
+                    _destinationDevice[i].Route = _sourceDevice[_targetSource].Route;
                 }
                 else
                 {
-                    _targetSource = 0;
+                    // Handle the case where _targetSource is out of bounds
+                    Debug.Console(2, this, "Invalid target source index: {0}", _targetSource);
+                    handleReportNotifyMessage("Invalid target source index while CycleRoute called.");
+                    // You might want to break the loop or set _targetSource to a valid index
+                    break;
                 }
+
+                // Increment _targetSource for the next iteration, resetting it to 0 if it exceeds the count
+                _targetSource = (_targetSource + 1) % _sourceDevice.Count;
             }
-                
-
-            ///// First loop
-            //for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
-            //{
-            //    var current = _destinationFeedbacks[i];
-            //    var next = _destinationFeedbacks[i + 1];
-            //    Debug.Console(2, this, "--------------------");
-            //    Debug.Console(2, this, "FL: Count: {0}", i);
-            //    if (current.IndexEnabled)
-            //    {
-            //        Debug.Console(2, this, "FL: current.IndexValue = {0}", current.IndexValue);
-            //        current.ShiftedIndexValue = next.IndexValue;
-            //        Debug.Console(2, this, "FL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
-            //    }
-            //}
-
-            ///// Second loop
-            //for (int i = 0; i < _destinationFeedbacks.Count - 1; i++)
-            //{
-            //    var current = _destinationFeedbacks[i];
-
-            //    Debug.Console(2, this, "--------------------");
-            //    if (current.IndexEnabled)
-            //    {
-            //        var shiftedItem = _destinationFeedbacks[current.ShiftedIndex];
-            //        Debug.Console(2, this, "SL: current.IndexValue = {0}", current.IndexValue);
-            //        shiftedItem.IndexValue = current.IndexValue;
-            //        Debug.Console(2, this, "SL: current.ShiftedIndexValue = {0}", current.ShiftedIndexValue);
-            //    }
-            //}  
         }
 
         /// <summary>
@@ -444,7 +446,7 @@ Item Route Value = {1},
     }
 
     /// <summary>
-    /// Custom device collection to define & update input and output arrays on bridge
+    /// Custom device collection to define and update input and output arrays on EPI bridge
     /// </summary>
     public class CustomDeviceCollectionWithFeedback
     {
@@ -502,29 +504,43 @@ Item Route Value = {1},
         public ushort ShiftedIndex { get; set; }
         public ushort ShiftedIndexValue { get; set; }
 
-        // Default constructor
+        /// <summary>
+        /// Default consructor
+        /// </summary>
         public CustomDeviceCollectionWithFeedback()
         {
             FeedbackBoolean = new BoolFeedback(() => _boolValue);
             FeedbackInteger = new IntFeedback(() => _intValue);
         }
         
-        // Method sets the value of the IndexEnabled property
+        /// <summary>
+        /// Sets the value of the IndexEnabled property
+        /// </summary>
+        /// <param name="enabled">bool value</param>
         public void SetIndexEnabled(bool enabled){
             IndexEnabled = enabled; 
         }
 
-        // Method sets the value of the IndexValue property
+        /// <summary>
+        /// Sets the value of the IndexValue property
+        /// </summary>
+        /// <param name="value">ushort value</param>
         public void SetIndexValue(ushort value){
             IndexValue = value;
         }
 
-        // Method returns the IndexValue property ushort value
+        /// <summary>
+        /// Returns the IndexValue property ushort value
+        /// </summary>
+        /// <returns></returns>
         public ushort FireIndexValueUpdate(){
             return IndexValue;
         }
 
-        // Method returns the IndexEbabled property bool value
+        /// <summary>
+        /// Returns the IndexEbabled property bool value
+        /// </summary>
+        /// <returns></returns>
         public bool FireIndexEnabledUpdate()
         {
             return IndexEnabled;
@@ -532,7 +548,7 @@ Item Route Value = {1},
     }
 
     /// <summary>
-    /// Custom device collection of arrays
+    /// Custom device collection containing two ushort values (Index and Route) per collection
     /// </summary>
     public class CustomDeviceCollection
     {
@@ -549,25 +565,37 @@ Item Route Value = {1},
             set { _routeValue = value; }
         }
 
-        // Method sets the value of the IndexValue property
+        /// <summary>
+        /// Sets the value of the Index value
+        /// </summary>
+        /// <param name="value">ushort value</param>
         public void SetIndex(ushort value)
         {
             _indexValue = value;
         }
 
-        // Method sets the value of the IndexValue property
+        /// <summary>
+        /// Sets the value of the Route property
+        /// </summary>
+        /// <param name="value">ushort value</param>
         public void SetRoute(ushort value)
         {
             _routeValue = value;
         }
 
-        // Method returns the IndexValue property ushort value
+        /// <summary>
+        /// Returns the IndexValue ushort value
+        /// </summary>
+        /// <returns></returns>
         public ushort FireIndexUpdate()
         {
             return _indexValue;
         }
 
-        // Method returns the IndexValue property ushort value
+        /// <summary>
+        /// Returns the Route ushort value
+        /// </summary>
+        /// <returns></returns>
         public ushort FireRouteUpdate()
         {
             return _routeValue;
