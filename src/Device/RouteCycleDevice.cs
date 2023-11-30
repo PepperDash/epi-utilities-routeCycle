@@ -603,14 +603,14 @@ Item Route Value = {1},
     }
 
     /// <summary>
-    /// Class triggers a bool object with built-in timer to auto-reset bool
+    /// Class triggers a bool with built-in timer to auto-reset
     /// </summary>
-    public class TimedBool
+    public class TimedBool : IDisposable
     {
         private bool _value;
         private CTimer _timer;
         private object _lock = new object();  // Lock for thread synchronization
-        private static int _timerDelay = 2000; // 2000 milliseconds = 2 seconds
+        private int _timerDelay;  // Instance field to store the timer delay
         public bool Value
         {
             get
@@ -635,7 +635,7 @@ Item Route Value = {1},
                                 _timer.Stop();
                                 _timer.Dispose();
                             }
-                            // Start or restart the timer for the duration specified by _timerDelay
+                            // Start or restart the timer with the delay set at instantiation
                             _timer = new CTimer(TimerCallback, null, _timerDelay);
                         }
                     }
@@ -654,22 +654,39 @@ Item Route Value = {1},
         }
 
         /// <summary>
-        /// Default constructor
+        /// Constructor that accepts a delay parameter to set the timer delay
         /// </summary>
-        public TimedBool(){ }
+        /// <param name="delayMilliseconds"></param>
+        public TimedBool(int delayMilliseconds)
+        {
+            _timerDelay = delayMilliseconds;  // Set the timer delay to the provided value
+        }
 
         /// <summary>
         /// Safely update the Value property from the timer thread
         /// </summary>
         /// <param name="o"></param>
         private void TimerCallback(object o) { Value = false; }
-        
+
         /// <summary>
-        /// Optional: Update timer delay from other parts of the program
+        /// Make sure to dispose the timer when the object is being disposed or finalized
         /// </summary>
-        /// <param name="delay"></param>
-        public static void SetTimerDelay(int delay)
-        { _timerDelay = delay; }
+        public void Dispose()
+        {
+            if (_timer != null)
+            {
+                _timer.Stop();
+                _timer.Dispose();
+                _timer = null;
+            }
+            GC.SuppressFinalize(this); // To prevent finalizer from running
+        }
+
+        // Destructor for TimedBool
+        ~TimedBool()
+        {
+            Dispose();
+        }
     }
 }
 
