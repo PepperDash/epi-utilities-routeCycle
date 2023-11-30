@@ -20,7 +20,6 @@ namespace RouteCycle.Factories
         private int _targetSource;
         private bool _inUse { get; set; }
         private bool _routeCycleBusy { get; set; }
-        private bool _customCollectionBusy { get; set; }
         private bool _reportNotifyMessageTrigger { get; set; }
         private string _reportNofityMessage {get; set; }
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
@@ -29,6 +28,7 @@ namespace RouteCycle.Factories
         private List<CustomDeviceCollection> _sourceDevice { get; set; }
         private BoolFeedback _reportNotifyFeedback { get; set; }
         private StringFeedback _reportNotifyMessageFeedback { get; set; }
+        private ROSBool _customCollectionWithFeedbackBusy;
 
         /// <summary>
         /// Plugin device constructor
@@ -40,6 +40,7 @@ namespace RouteCycle.Factories
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
+            ROSBool _customCollectionWithFeedbackBusy = new ROSBool(2000);  // Set the delay to 2000ms when instantiating
             _reportNotifyFeedback = new BoolFeedback(() => _reportNotifyMessageTrigger);
             _reportNotifyMessageFeedback = new StringFeedback(() => _reportNofityMessage);
             _destinationFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
@@ -119,6 +120,7 @@ namespace RouteCycle.Factories
                 var destinationSelectJoin = localKvp.Index + joinMap.DestinationSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge (AKA destination select) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
+                //trilist.SetSigTrueAction(destinationSelectJoin, );
 
                 localKvp.OnIndexEnabledTrueChanged += handleDestinationIndexEnabledTrueChanged;
                 localKvp.OnIndexEnabledFalseChanged += handleDestinationIndexEnabledFalseChanged;
@@ -387,11 +389,22 @@ Item Route Value = {1},
         /// </summary>
         private void CycleRoute()
         {
+            if (_customCollectionWithFeedbackBusy.Value)
+            {
+                Debug.Console(2, this, "CycleRoute not available while sources and destination changing");
+                handleReportNotifyMessage("CycleRoute not available while sources and destination changing");
+                return;  
+            }
+
+            // Set block for toggling sources and destinations
+            _routeCycleBusy = true;
+
             Debug.Console(2, this, "--RC Triggered--");
             if (!_inUse)
             {
                 Debug.Console(2, this, "CycleRoute called while device InUse not set");
                 handleReportNotifyMessage("CycleRoute called while device InUse not set");
+                _routeCycleBusy = false;
                 return;
             }
 
@@ -399,6 +412,7 @@ Item Route Value = {1},
             {
                 Debug.Console(2, this, "Source or destination count invalid while CycleRoute called. Source count = {0}, destination count = {1}.", _sourceDevice.Count, _destinationDevice.Count);
                 handleReportNotifyMessage("Source or destination count invalid (both must be greater than zero) while CycleRoute called.");
+                _routeCycleBusy = false;
                 return;
             }
 
@@ -412,6 +426,12 @@ Item Route Value = {1},
                     Debug.Console(2, this, "RC: _targetSource = {0}", _targetSource);
                     Debug.Console(2, this, "RC: _sourceDevice[_targetSource].Route = {0}", _sourceDevice[_targetSource].Route);
                     _destinationDevice[i].Route = _sourceDevice[_targetSource].Route;
+                    var tempIndex = _destinationDevice[i].Index;
+                    var tempNewIndex = _destinationFeedbacks[tempIndex].Index;
+
+                    Debug.Console(2, this, "RC: tempIndex = {0}", tempIndex);
+                    Debug.Console(2, this, "RC: tempNewIndex = {0}", tempNewIndex);
+                    _destinationFeedbacks[tempNewIndex].IndexValue = _sourceDevice[_targetSource].Route;
                 }
                 else
                 {
@@ -426,6 +446,7 @@ Item Route Value = {1},
                 _targetSource = (_targetSource + 1) % _sourceDevice.Count;
                 Debug.Console(2, this, "RC: _targetSource incremented or reset, value = {0}", _targetSource);
             }
+            _routeCycleBusy = false;
         }
 
         /// <summary>
@@ -473,14 +494,12 @@ Item Route Value = {1},
                     FeedbackBoolean.FireUpdate();
                     if (_boolValue)
                     {
-                        Debug.Console(2, "CDCWFB, FIEU, _boolValue TRUE");
                         if (OnIndexEnabledTrueChanged != null)
                             OnIndexEnabledTrueChanged(this.Index, this.IndexValue);
                         return;
                     }
                     else if (!_boolValue)
                     {
-                        Debug.Console(2, "CDCWFB, FIEU, _boolValue FALSE");
                         if (OnIndexEnabledFalseChanged != null)
                             OnIndexEnabledFalseChanged(this.Index);
                     }
@@ -627,12 +646,13 @@ Item Route Value = {1},
     /// <summary>
     /// Class triggers a bool with built-in timer to auto-reset
     /// </summary>
-    public class TimedBool : IDisposable
+    public class ROSBool : IDisposable
     {
         private bool _value;
         private CTimer _timer;
         private object _lock = new object();  // Lock for thread synchronization
         private int _timerDelay;  // Instance field to store the timer delay
+        public event EventHandler<BoolEventArgs> ValueChanged;
         public bool Value
         {
             get
@@ -646,29 +666,30 @@ Item Route Value = {1},
             {
                 lock (_lock)
                 {
-                    if (value)
+                    if (value != _value) // Check if the value is actually changing
                     {
-                        if (!_value) // Only reset the timer if the value is changing
+                        _value = value;
+                        OnValueChanged(value); // Raise the event with the new value
+
+                        if (value) // If being set to true
                         {
-                            _value = true;
                             // If the timer is already running, stop it first
                             if (_timer != null)
                             {
                                 _timer.Stop();
                                 _timer.Dispose();
                             }
-                            // Start or restart the timer with the delay set at instantiation
+                            // Start or restart the timer for the delay set at instantiation
                             _timer = new CTimer(TimerCallback, null, _timerDelay);
                         }
-                    }
-                    else
-                    {
-                        _value = false;
-                        // Stop and dispose of the timer if it's not needed
-                        if (_timer != null)
+                        else // If being set to false
                         {
-                            _timer.Stop();
-                            _timer.Dispose();
+                            // Stop and dispose of the timer if it's not needed
+                            if (_timer != null)
+                            {
+                                _timer.Stop();
+                                _timer.Dispose();
+                            }
                         }
                     }
                 }
@@ -679,7 +700,7 @@ Item Route Value = {1},
         /// Constructor that accepts a delay parameter to set the timer delay
         /// </summary>
         /// <param name="delayMilliseconds"></param>
-        public TimedBool(int delayMilliseconds)
+        public ROSBool(int delayMilliseconds)
         {
             _timerDelay = delayMilliseconds;  // Set the timer delay to the provided value
         }
@@ -690,6 +711,26 @@ Item Route Value = {1},
         /// <param name="o"></param>
         private void TimerCallback(object o) { Value = false; }
 
+        /// <summary>
+        /// Method to raise the ValueChanged event
+        /// </summary>
+        /// <param name="newValue"></param>
+        protected virtual void OnValueChanged(bool newValue)
+        {
+            // Create a new BoolEventArgs with the new value
+            BoolEventArgs args = new BoolEventArgs(newValue);
+
+            // Make a temporary copy of the event to avoid possibility of 
+            // a race condition if the last subscriber unsubscribes
+            // immediately after the null check and before the event is raised.
+            EventHandler<BoolEventArgs> handler = ValueChanged;
+            if (handler != null)
+            {
+                handler(this, args);
+            }
+        }
+
+        #region IDisposable Members
         /// <summary>
         /// Make sure to dispose the timer when the object is being disposed or finalized
         /// </summary>
@@ -705,9 +746,27 @@ Item Route Value = {1},
         }
 
         // Destructor for TimedBool
-        ~TimedBool()
+        ~ROSBool()
         {
             Dispose();
+        }
+        #endregion
+    }
+
+    /// <summary>
+    /// Subclass to hold  boolean value to pass with event 
+    /// </summary>
+    public class BoolEventArgs : EventArgs
+    {
+        public bool Value { get; private set; }
+
+        /// <summary>
+        /// Subclass method of EventArgs for the boolean value
+        /// </summary>
+        /// <param name="value"></param>
+        public BoolEventArgs(bool value)
+        {
+            Value = value;
         }
     }
 }
