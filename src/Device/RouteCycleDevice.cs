@@ -448,7 +448,7 @@ Item Route Value = {1},
     /// <summary>
     /// Custom device collection to define and update input and output arrays on EPI bridge
     /// </summary>
-    public class CustomDeviceCollectionWithFeedback
+    public class CustomDeviceCollectionWithFeedback : IDisposable
     {
         private bool _boolValue;
         private ushort _intValue;
@@ -545,6 +545,28 @@ Item Route Value = {1},
         {
             return IndexEnabled;
         }
+
+        #region IDisposable Members
+        /// <summary>
+        /// Dispose members
+        /// </summary>
+        public void Dispose()
+        {
+            if (OnIndexEnabledTrueChanged != null)
+                { OnIndexEnabledTrueChanged = null; }
+            if (OnIndexValueChanged != null)
+                { OnIndexValueChanged = null; }
+            if (OnIndexEnabledFalseChanged != null)
+                { OnIndexEnabledFalseChanged = null; }
+            GC.SuppressFinalize(this); // To prevent finalizer from running
+        }
+
+        // Destructor for CustomDeviceCollectionWithFeedback
+        ~CustomDeviceCollectionWithFeedback()
+        {
+            Dispose();
+        }
+        #endregion
     }
 
     /// <summary>
