@@ -19,6 +19,8 @@ namespace RouteCycle.Factories
         private int _maxIO = 32;
         private int _targetSource;
         private bool _inUse { get; set; }
+        private bool _routeCycleBusy { get; set; }
+        private bool _customCollectionBusy { get; set; }
         private bool _reportNotifyMessageTrigger { get; set; }
         private string _reportNofityMessage {get; set; }
         private List<CustomDeviceCollectionWithFeedback> _destinationFeedbacks { get; set;}
@@ -598,6 +600,76 @@ Item Route Value = {1},
         {
             return _routeValue;
         }
+    }
+
+    /// <summary>
+    /// Class triggers a bool object with built-in timer to auto-reset bool
+    /// </summary>
+    public class TimedBool
+    {
+        private bool _value;
+        private CTimer _timer;
+        private object _lock = new object();  // Lock for thread synchronization
+        private static int _timerDelay = 2000; // 2000 milliseconds = 2 seconds
+        public bool Value
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _value;
+                }
+            }
+            set
+            {
+                lock (_lock)
+                {
+                    if (value)
+                    {
+                        if (!_value) // Only reset the timer if the value is changing
+                        {
+                            _value = true;
+                            // If the timer is already running, stop it first
+                            if (_timer != null)
+                            {
+                                _timer.Stop();
+                                _timer.Dispose();
+                            }
+                            // Start or restart the timer for the duration specified by _timerDelay
+                            _timer = new CTimer(TimerCallback, null, _timerDelay);
+                        }
+                    }
+                    else
+                    {
+                        _value = false;
+                        // Stop and dispose of the timer if it's not needed
+                        if (_timer != null)
+                        {
+                            _timer.Stop();
+                            _timer.Dispose();
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public TimedBool(){ }
+
+        /// <summary>
+        /// Safely update the Value property from the timer thread
+        /// </summary>
+        /// <param name="o"></param>
+        private void TimerCallback(object o) { Value = false; }
+        
+        /// <summary>
+        /// Optional: Update timer delay from other parts of the program
+        /// </summary>
+        /// <param name="delay"></param>
+        public static void SetTimerDelay(int delay)
+        { _timerDelay = delay; }
     }
 }
 
