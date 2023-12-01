@@ -57,9 +57,7 @@ namespace RouteCycle.Factories
                 {
                     Index = i,
                     IndexEnabled = false,
-                    IndexValue = 0,
-                    ShiftedIndex = 0,
-                    ShiftedIndexValue = 0
+                    IndexValue = 0
                 });
             }
 
@@ -70,9 +68,7 @@ namespace RouteCycle.Factories
                 {
                     Index = i,
                     IndexEnabled = false,
-                    IndexValue = 0,
-                    ShiftedIndex = 0,
-                    ShiftedIndexValue = 0
+                    IndexValue = 0
                 });
             }
         }
@@ -554,8 +550,6 @@ Item Route Value = {1},
                     OnIndexValueChanged(this.Index, value); 
             }
         }
-        public ushort ShiftedIndex { get; set; }
-        public ushort ShiftedIndexValue { get; set; }
 
         /// <summary>
         /// Default consructor
