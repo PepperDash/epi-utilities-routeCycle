@@ -28,7 +28,7 @@ namespace RouteCycle.Factories
         private List<CustomDeviceCollection> _sourceDevice { get; set; }
         private BoolFeedback _reportNotifyFeedback { get; set; }
         private StringFeedback _reportNotifyMessageFeedback { get; set; }
-        private ROSBool _customCollectionWithFeedbackBusy;
+        private ROSBool _customCollectionWithFeedbackBusy { get; set; }
 
         /// <summary>
         /// Plugin device constructor
@@ -40,13 +40,14 @@ namespace RouteCycle.Factories
             : base(key, name)
         {
             Debug.Console(0, this, "Constructing new {0} instance", name);
-            ROSBool _customCollectionWithFeedbackBusy = new ROSBool(2000);  // Set the delay to 2000ms when instantiating
+            _customCollectionWithFeedbackBusy = new ROSBool(2000);
             _reportNotifyFeedback = new BoolFeedback(() => _reportNotifyMessageTrigger);
             _reportNotifyMessageFeedback = new StringFeedback(() => _reportNofityMessage);
             _destinationFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
             _sourceFeedbacks = new List<CustomDeviceCollectionWithFeedback>();
             _sourceDevice = new List<CustomDeviceCollection>();
             _destinationDevice = new List<CustomDeviceCollection>();
+            _routeCycleBusy = new bool();
             _targetSource = 0;
 
             // Initialize the _destinationFeedbacks collection
@@ -120,7 +121,7 @@ namespace RouteCycle.Factories
                 var destinationSelectJoin = localKvp.Index + joinMap.DestinationSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge (AKA destination select) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
-                //trilist.SetSigTrueAction(destinationSelectJoin, );
+                trilist.SetSigTrueAction(destinationSelectJoin, TriggerROSBool);
 
                 localKvp.OnIndexEnabledTrueChanged += handleDestinationIndexEnabledTrueChanged;
                 localKvp.OnIndexEnabledFalseChanged += handleDestinationIndexEnabledFalseChanged;
@@ -153,6 +154,7 @@ namespace RouteCycle.Factories
                 var sourceSelectJoin = localKvp.Index + joinMap.SourceSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge to internal method
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
+                trilist.SetSigTrueAction(sourceSelectJoin, TriggerROSBool);
                 
                 localKvp.OnIndexEnabledTrueChanged += handleSourceIndexEnabledTrueChanged;
                 localKvp.OnIndexEnabledFalseChanged += handleSourceIndexEnabledFalseChanged;
@@ -389,6 +391,35 @@ Item Route Value = {1},
         /// </summary>
         private void CycleRoute()
         {
+            if (_routeCycleBusy)
+            {
+                Debug.Console(2, this, "CycleRoute busy, wait for it to complete before duplicate calls");
+                return;
+            }
+            if (_customCollectionWithFeedbackBusy == null)
+            {
+                Debug.Console(2, this, "_customCollectionWithFeedbackBusy is null");
+                return;
+            }
+
+            if (_sourceDevice == null)
+            {
+                Debug.Console(2, this, "_sourceDevice is null");
+                return;
+            }
+
+            if (_destinationDevice == null)
+            {
+                Debug.Console(2, this, "_destinationDevice is null");
+                return;
+            }
+
+            if (_destinationFeedbacks == null)
+            {
+                Debug.Console(2, this, "_destinationFeedbacks is null");
+                return;
+            }
+
             if (_customCollectionWithFeedbackBusy.Value)
             {
                 Debug.Console(2, this, "CycleRoute not available while sources and destination changing");
@@ -427,11 +458,9 @@ Item Route Value = {1},
                     Debug.Console(2, this, "RC: _sourceDevice[_targetSource].Route = {0}", _sourceDevice[_targetSource].Route);
                     _destinationDevice[i].Route = _sourceDevice[_targetSource].Route;
                     var tempIndex = _destinationDevice[i].Index;
-                    var tempNewIndex = _destinationFeedbacks[tempIndex].Index;
 
                     Debug.Console(2, this, "RC: tempIndex = {0}", tempIndex);
-                    Debug.Console(2, this, "RC: tempNewIndex = {0}", tempNewIndex);
-                    _destinationFeedbacks[tempNewIndex].IndexValue = _sourceDevice[_targetSource].Route;
+                    _destinationFeedbacks[tempIndex].IndexValue = _sourceDevice[_targetSource].Route;
                 }
                 else
                 {
@@ -462,6 +491,11 @@ Item Route Value = {1},
                 item.FeedbackBoolean.FireUpdate();
             foreach (var item in _sourceFeedbacks)
                 item.FeedbackInteger.FireUpdate();
+        }
+
+        private void TriggerROSBool()
+        {
+            _customCollectionWithFeedbackBusy.Value = true;
         }
         #endregion
     }
@@ -754,7 +788,7 @@ Item Route Value = {1},
     }
 
     /// <summary>
-    /// Subclass to hold  boolean value to pass with event 
+    /// Custom subclass of EventArgs to hold boolean value to pass with event 
     /// </summary>
     public class BoolEventArgs : EventArgs
     {
