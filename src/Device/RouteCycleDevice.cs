@@ -489,6 +489,9 @@ Item Route Value = {1},
                 item.FeedbackInteger.FireUpdate();
         }
 
+        /// <summary>
+        /// Trigger custom ROSBool class bool
+        /// </summary>
         private void TriggerROSBool()
         {
             _customCollectionWithFeedbackBusy.Value = true;
