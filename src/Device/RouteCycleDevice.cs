@@ -117,7 +117,7 @@ namespace RouteCycle.Factories
                 var destinationSelectJoin = localKvp.Index + joinMap.DestinationSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge (AKA destination select) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
-                trilist.SetSigTrueAction(destinationSelectJoin, TriggerROSBool);
+                //trilist.SetSigTrueAction(destinationSelectJoin, TriggerROSBool);
 
                 localKvp.OnIndexEnabledTrueChanged += handleDestinationIndexEnabledTrueChanged;
                 localKvp.OnIndexEnabledFalseChanged += handleDestinationIndexEnabledFalseChanged;
@@ -150,7 +150,7 @@ namespace RouteCycle.Factories
                 var sourceSelectJoin = localKvp.Index + joinMap.SourceSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge to internal method
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
-                trilist.SetSigTrueAction(sourceSelectJoin, TriggerROSBool);
+                //trilist.SetSigTrueAction(sourceSelectJoin, TriggerROSBool);
                 
                 localKvp.OnIndexEnabledTrueChanged += handleSourceIndexEnabledTrueChanged;
                 localKvp.OnIndexEnabledFalseChanged += handleSourceIndexEnabledFalseChanged;

@@ -1,61 +1,12 @@
-# Essentials Plugin Template (c) 2020
+![PepperDash Logo](/images/essentials-plugin-blue.png)
 
 ## License
 
 Provided under MIT license
 
-## Overview
+# PepperDash Essentials Utilities Route Cycle Plugin (c) 2023
 
-Fork this repo when creating a new plugin for Essentials. For more information about plugins, refer to the Essentials Wiki [Plugins](https://github.com/PepperDash/Essentials/wiki/Plugins) article.
-
-This repo contains example classes for the three main categories of devices:
-* `EssentialsPluginTemplateDevice`: Used for most third party devices which require communication over a streaming mechanism such as a Com port, TCP/SSh/UDP socket, CEC, etc
-* `EssentialsPluginTemplateLogicDevice`:  Used for devices that contain logic, but don't require any communication with third parties outside the program
-* `EssentialsPluginTemplateCrestronDevice`:  Used for devices that represent a piece of Crestron hardware
-
-There are matching factory classes for each of the three categories of devices.  The `EssentialsPluginTemplateConfigObject` should be used as a template and modified for any of the categories of device.  Same goes for the `EssentialsPluginTemplateBridgeJoinMap`.
-
-This also illustrates how a plugin can contain multiple devices.
-
-## Cloning Instructions
-
-After forking this repository into your own GitHub space, you can create a new repository using this one as the template.  Then you must install the necessary dependencies as indicated below.
-
-## Dependencies
-
-The [Essentials](https://github.com/PepperDash/Essentials) libraries are required. They referenced via nuget. You must have nuget.exe installed and in the `PATH` environment variable to use the following command. Nuget.exe is available at [nuget.org](https://dist.nuget.org/win-x86-commandline/latest/nuget.exe).
-
-### Installing Dependencies
-
-To install dependencies once nuget.exe is installed, run the following command from the root directory of your repository:
-`nuget install .\packages.config -OutputDirectory .\packages -excludeVersion`.
-Alternatively, you can simply run the `GetPackages.bat` file.
-To verify that the packages installed correctly, open the plugin solution in your repo and make sure that all references are found, then try and build it.
-
-### Installing Different versions of PepperDash Core
-
-If you need a different version of PepperDash Core, use the command `nuget install .\packages.config -OutputDirectory .\packages -excludeVersion -Version {versionToGet}`. Omitting the `-Version` option will pull the version indicated in the packages.config file.
-
-### Instructions for Renaming Solution and Files
-
-See the Task List in Visual Studio for a guide on how to start using the template.  There is extensive inline documentation and examples as well.
-
-For renaming instructions in particular, see the XML `remarks` tags on class definitions
-
-## Build Instructions (PepperDash Internal) 
-
-## Generating Nuget Package 
-
-In the solution folder is a file named "PDT.EssentialsPluginTemplate.nuspec" 
-
-1. Rename the file to match your plugin solution name 
-2. Edit the file to include your project specifics including
-    1. <id>PepperDash.Essentials.Plugin.MakeModel</id> Convention is to use the prefix "PepperDash.Essentials.Plugin" and include the MakeModel of the device. 
-    2. <projectUrl>https://github.com/PepperDash/EssentialsPluginTemplate</projectUrl> Change to your url to the project repo
-
-There is no longer a requirement to adjust workflow files for nuget generation for private and public repositories.  This is now handled automatically in the workflow.
-
-__If you do not make these changes to the nuspec file, the project will not generate a nuget package__
+This repo contains a plugin for use with [PepperDash Essentials](https://github.com/PepperDash/Essentials). This plugin enables Essentials to cycle source values to various destinations based on selected sources and destinations. Typical use case includes a scenrio where the count of sources far exceed the count of available destinations. The desired amount of sources would cycle through the desired destinations.
 
 ### Plugin Configuration Object
 
@@ -71,8 +22,21 @@ Update the configuration object as needed for the plugin being developed.
         "type": "routeCycle",
         "group": "switcher",
         "parentDeviceKey": "processor",
-        "properties": {}
-      },		
+        "properties": {
+          "parentDeviceKey": "processor",
+          "control": {
+            "method": "tcpIp",
+            "tcpSshProperties": {
+              "address": "",
+              "port": 23,
+              "autoReconnect": true,
+              "autoReconnectIntervalMs": 10000,
+              "username": "",
+              "password": ""
+            }
+          }
+        }
+     },		
 	]
 }
 ```
@@ -119,11 +83,12 @@ The selection below documents the digital, analog, and serial joins used by the 
 | dig-o (Input/Triggers)     | I/O   | dig-i (Feedback)     |
 |----------------------------|-------|----------------------|
 | InUse_Fb                   | 1     | Report Notify Pulse  |
-| CycleRoute                 | 2     | Connected            |
+| CycleRoute                 | 2     |                      |
 | SourcesClear               | 3     |                      |
 | DestinationsClear          | 4     |                      |
 | SourceSelect               | 11-32 | SourceSelectFb       |
 | DestinationSelect          | 51-82 | DestinationSelectFb  |
+
 #### Analogs
 | an_o (Input/Triggers) | I/O  | an_i (Feedback) |
 |-----------------------|------|-----------------|
@@ -133,7 +98,6 @@ The selection below documents the digital, analog, and serial joins used by the 
 |                       | 4    |                       |
 |                       | 5    |                       |
 
-
 #### Serials
 | serial-o (Input/Triggers) | I/O | serial-i (Feedback)  |
 |---------------------------|-----|----------------------|
@@ -142,3 +106,31 @@ The selection below documents the digital, analog, and serial joins used by the 
 |                           | 3   |                      |
 |                           | 4   |                      |
 |                           | 5   |                      |
+
+## Github Actions
+
+This repo contains two Github Action workflows that will build this project automatically. Modify the SOLUTION_PATH and SOLUTION_FILE environment variables as needed. Any branches named `feature/*`, `release/*`, `hotfix/*` or `development` will automatically be built with the action and create a release in the repository with a version number based on the latest release on the master branch. If there are no releases yet, the version number will be 0.0.1. The version number will be modified based on what branch triggered the build:
+
+- `feature` branch builds will be tagged with an `alpha` descriptor, with the Action run appended: `0.0.1-alpha-1`
+- `development` branch builds will be tagged with a `beta` descriptor, with the Action run appended: `0.0.1-beta-2`
+- `release` branches will be tagged with an `rc` descriptor, with the Action run appended: `0.0.1-rc-3`
+- `hotfix` branch builds will be tagged with a `hotfix` descriptor, with the Action run appended: `0.0.1-hotfix-4`
+
+Builds on the `Main` branch will ONLY be triggered by manually creating a release using the web interface in the repository. They will be versioned with the tag that is created when the release is created. The tags MUST take the form `major.minor.revision` to be compatible with the build process. A tag like `v0.1.0-alpha` is NOT compatabile and may result in the build process failing.
+
+If you have any questions about the action, contact [Andrew Welker](awelker@pepperdash.com) or [Neil Dorin](ndorin@pepperdash.com).
+
+## Dependencies
+
+The [Essentials](https://github.com/PepperDash/Essentials) libraries are required. They referenced via nuget. You must have nuget.exe installed and in the `PATH` environment variable to use the following command. Nuget.exe is available at [nuget.org](https://dist.nuget.org/win-x86-commandline/latest/nuget.exe).
+
+### Installing Dependencies
+
+To install dependencies once nuget.exe is installed, run the following command from the root directory of your repository:
+`nuget install .\packages.config -OutputDirectory .\packages -excludeVersion`.
+Alternatively, you can simply run the `GetPackages.bat` file.
+To verify that the packages installed correctly, open the plugin solution in your repo and make sure that all references are found, then try and build it.
+
+### Installing Different versions of PepperDash Core
+
+If you need a different version of PepperDash Core, use the command `nuget install .\packages.config -OutputDirectory .\packages -excludeVersion -Version {versionToGet}`. Omitting the `-Version` option will pull the version indicated in the packages.config file.
