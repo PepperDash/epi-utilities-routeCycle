@@ -118,7 +118,7 @@ This repo contains two Github Action workflows that will build this project auto
 
 Builds on the `Main` branch will ONLY be triggered by manually creating a release using the web interface in the repository. They will be versioned with the tag that is created when the release is created. The tags MUST take the form `major.minor.revision` to be compatible with the build process. A tag like `v0.1.0-alpha` is NOT compatabile and may result in the build process failing.
 
-If you have any questions about the action, contact [Andrew Welker](awelker@pepperdash.com) or [Neil Dorin](ndorin@pepperdash.com).
+If you have any questions about the action, contact [Andrew Welker](mailto:awelker@pepperdash.com) or [Neil Dorin](mailto:ndorin@pepperdash.com).
 
 ## Dependencies
 
