@@ -18,7 +18,7 @@ Update the configuration object as needed for the plugin being developed.
 		{
         "key": "ar-bridge-1",
         "uid": 0,
-        "name": "Auto Route Cycler",
+        "name": "Route Cycle",
         "type": "routeCycle",
         "group": "switcher",
         "parentDeviceKey": "processor",
