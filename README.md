@@ -6,7 +6,7 @@ Provided under MIT license
 
 # PepperDash Essentials Utilities Route Cycle Plugin (c) 2023
 
-This repo contains a plugin for use with [PepperDash Essentials](https://github.com/PepperDash/Essentials). This plugin enables Essentials to cycle source values to various destinations based on selected sources and destinations. Typical use case includes a scenrio where the count of sources far exceed the count of available destinations. The desired amount of sources would cycle through the desired destinations.
+This repo contains a plugin for use with [PepperDash Essentials](https://github.com/PepperDash/Essentials). This plugin enables Essentials to cycle source values to destinations. Typical use case involves a large count of sources with a small count of destinations. The desired amount of sources would cycle through the desired destinations.
 
 ### Plugin Configuration Object
 
