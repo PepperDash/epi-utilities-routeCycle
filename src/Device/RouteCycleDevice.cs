@@ -72,6 +72,11 @@ namespace RouteCycle.Factories
                     IndexValue = 0
                 });
             }
+
+            foreach (var item in _destinationFeedbacks)
+            { item.IndexEnabledChange += TriggerROSBool; }
+            foreach (var item in _sourceFeedbacks)
+            { item.IndexEnabledChange += TriggerROSBool; }
         }
         #region Overrides of EssentialsBridgeableDevice
 
@@ -489,18 +494,12 @@ Item Route Value = {1},
                 item.FeedbackInteger.FireUpdate();
         }
 
-        private bool handleTriggerRosBool()
-        {
-            TriggerROSBool();
-            Debug.Console(2, this, "handTriggerRosBool Triggered");
-            return true;
-        }
-
         /// <summary>
         /// Trigger custom ROSBool class bool
         /// </summary>
         private void TriggerROSBool()
         {
+            Debug.Console(2, this, "TriggerROSBool Triggered");
             _customCollectionWithFeedbackBusy.Value = true;
         }
 
@@ -524,7 +523,8 @@ Item Route Value = {1},
         private ushort _intValue;
         public readonly BoolFeedback FeedbackBoolean;
         public readonly IntFeedback FeedbackInteger;
-        public Func<bool> IndexEnabledChange;
+        public delegate void CustomEventHandler();
+        public event CustomEventHandler IndexEnabledChange;
         public event Action<ushort, ushort> OnIndexEnabledTrueChanged;
         public event Action<ushort, ushort> OnIndexValueChanged;
         public event Action<ushort> OnIndexEnabledFalseChanged;
@@ -537,7 +537,7 @@ Item Route Value = {1},
             } 
             set 
             {
-                IndexEnabledChange();
+                onIndexEnabled();
                 // Only toggle the value if the incoming value is true
                 if (value == true)
                 {
@@ -581,6 +581,15 @@ Item Route Value = {1},
             FeedbackBoolean = new BoolFeedback(() => _boolValue);
             FeedbackInteger = new IntFeedback(() => _intValue);
         }
+        // Method to raise the event
+        protected virtual void onIndexEnabled()
+        {
+            if (IndexEnabledChange != null)
+            {
+                IndexEnabledChange(); // Raise the event
+            }
+        }
+
         private int delegateIntValueFunction()
         {
             return _intValue;
