@@ -562,39 +562,6 @@ Item Route Value = {1},
             FeedbackBoolean = new BoolFeedback(() => _boolValue);
             FeedbackInteger = new IntFeedback(() => _intValue);
         }
-        
-        /// <summary>
-        /// Sets the value of the IndexEnabled property
-        /// </summary>
-        /// <param name="enabled">bool value</param>
-        public void SetIndexEnabled(bool enabled){
-            IndexEnabled = enabled; 
-        }
-
-        /// <summary>
-        /// Sets the value of the IndexValue property
-        /// </summary>
-        /// <param name="value">ushort value</param>
-        public void SetIndexValue(ushort value){
-            IndexValue = value;
-        }
-
-        /// <summary>
-        /// Returns the IndexValue property ushort value
-        /// </summary>
-        /// <returns></returns>
-        public ushort FireIndexValueUpdate(){
-            return IndexValue;
-        }
-
-        /// <summary>
-        /// Returns the IndexEbabled property bool value
-        /// </summary>
-        /// <returns></returns>
-        public bool FireIndexEnabledUpdate()
-        {
-            return IndexEnabled;
-        }
 
         #region IDisposable Members
         /// <summary>
@@ -635,42 +602,6 @@ Item Route Value = {1},
         {
             get { return _routeValue; }
             set { _routeValue = value; }
-        }
-
-        /// <summary>
-        /// Sets the value of the Index value
-        /// </summary>
-        /// <param name="value">ushort value</param>
-        public void SetIndex(ushort value)
-        {
-            _indexValue = value;
-        }
-
-        /// <summary>
-        /// Sets the value of the Route property
-        /// </summary>
-        /// <param name="value">ushort value</param>
-        public void SetRoute(ushort value)
-        {
-            _routeValue = value;
-        }
-
-        /// <summary>
-        /// Returns the IndexValue ushort value
-        /// </summary>
-        /// <returns></returns>
-        public ushort FireIndexUpdate()
-        {
-            return _indexValue;
-        }
-
-        /// <summary>
-        /// Returns the Route ushort value
-        /// </summary>
-        /// <returns></returns>
-        public ushort FireRouteUpdate()
-        {
-            return _routeValue;
         }
     }
 
