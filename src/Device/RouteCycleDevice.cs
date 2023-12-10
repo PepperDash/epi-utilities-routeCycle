@@ -39,6 +39,7 @@ namespace RouteCycle.Factories
         public RouteCycleDevice(string key, string name)
             : base(key, name)
         {
+            CrestronConsole.AddNewConsoleCommand(_reportDestinationFeedbacksIndexValues, "reportrcinfo", "Reports the Route Cycle Destination Feedback Index Values", ConsoleAccessLevelEnum.AccessOperator);
             Debug.Console(0, this, "Constructing new {0} instance", name);
             _customCollectionWithFeedbackBusy = new ROSBool(2000);
             _reportNotifyFeedback = new BoolFeedback(() => _reportNotifyMessageTrigger);
@@ -117,7 +118,6 @@ namespace RouteCycle.Factories
                 var destinationSelectJoin = localKvp.Index + joinMap.DestinationSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge (AKA destination select) to internal method
                 trilist.SetBoolSigAction(destinationSelectJoin, (input) => { localKvp.IndexEnabled = input; });
-                //trilist.SetSigTrueAction(destinationSelectJoin, TriggerROSBool);
 
                 localKvp.OnIndexEnabledTrueChanged += handleDestinationIndexEnabledTrueChanged;
                 localKvp.OnIndexEnabledFalseChanged += handleDestinationIndexEnabledFalseChanged;
@@ -150,7 +150,6 @@ namespace RouteCycle.Factories
                 var sourceSelectJoin = localKvp.Index + joinMap.SourceSelect.JoinNumber;
                 // Link incoming from SIMPL EISC bridge to internal method
                 trilist.SetBoolSigAction(sourceSelectJoin, (input) => { localKvp.IndexEnabled = input; });
-                //trilist.SetSigTrueAction(sourceSelectJoin, TriggerROSBool);
                 
                 localKvp.OnIndexEnabledTrueChanged += handleSourceIndexEnabledTrueChanged;
                 localKvp.OnIndexEnabledFalseChanged += handleSourceIndexEnabledFalseChanged;
@@ -457,6 +456,7 @@ Item Route Value = {1},
 
                     Debug.Console(2, this, "RC: tempIndex = {0}", tempIndex);
                     _destinationFeedbacks[tempIndex].IndexValue = _sourceDevice[_targetSource].Route;
+                    _destinationFeedbacks[tempIndex].FeedbackInteger.InvokeFireUpdate();
                 }
                 else
                 {
@@ -489,12 +489,28 @@ Item Route Value = {1},
                 item.FeedbackInteger.FireUpdate();
         }
 
+        private bool handleTriggerRosBool()
+        {
+            TriggerROSBool();
+            Debug.Console(2, this, "handTriggerRosBool Triggered");
+            return true;
+        }
+
         /// <summary>
         /// Trigger custom ROSBool class bool
         /// </summary>
         private void TriggerROSBool()
         {
             _customCollectionWithFeedbackBusy.Value = true;
+        }
+
+        private void _reportDestinationFeedbacksIndexValues(string command)
+        {
+            foreach (var item in _destinationFeedbacks)
+            {
+                if (item != null)
+                    Debug.Console(2, this, "All _destFdbk Index Value = {0}", item.IndexValue);
+            }
         }
         #endregion
     }
@@ -508,6 +524,7 @@ Item Route Value = {1},
         private ushort _intValue;
         public readonly BoolFeedback FeedbackBoolean;
         public readonly IntFeedback FeedbackInteger;
+        public Func<bool> IndexEnabledChange;
         public event Action<ushort, ushort> OnIndexEnabledTrueChanged;
         public event Action<ushort, ushort> OnIndexValueChanged;
         public event Action<ushort> OnIndexEnabledFalseChanged;
@@ -520,6 +537,7 @@ Item Route Value = {1},
             } 
             set 
             {
+                IndexEnabledChange();
                 // Only toggle the value if the incoming value is true
                 if (value == true)
                 {
@@ -548,7 +566,8 @@ Item Route Value = {1},
             set
             {
                 _intValue = value;
-                FeedbackInteger.FireUpdate();
+                FeedbackInteger.SetValueFunc(() => delegateIntValueFunction());
+                //FeedbackInteger.FireUpdate();
                 if (OnIndexValueChanged != null)
                     OnIndexValueChanged(this.Index, value); 
             }
@@ -561,6 +580,10 @@ Item Route Value = {1},
         {
             FeedbackBoolean = new BoolFeedback(() => _boolValue);
             FeedbackInteger = new IntFeedback(() => _intValue);
+        }
+        private int delegateIntValueFunction()
+        {
+            return _intValue;
         }
 
         #region IDisposable Members
