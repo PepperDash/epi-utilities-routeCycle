@@ -6,7 +6,19 @@ Provided under MIT license
 
 # PepperDash Essentials Utilities Route Cycle Plugin (c) 2023
 
-This repo contains a plugin for use with [PepperDash Essentials](https://github.com/PepperDash/Essentials). This plugin enables Essentials to cycle source values to destinations. Typical use case involves a large count of sources with a small count of destinations. The desired amount of sources would cycle through the desired destinations.
+This repo contains a plugin for use with [PepperDash Essentials](https://github.com/PepperDash/Essentials). 
+
+## Overview
+The RouteCycle Device Plugin provides a solution for managing signal routing within Crestron control systems using the SIMPL# platform. This plugin allows for logic devices that do not communicate outside the program to interact with an EISC (Ethernet to Serial Control) bridge.
+
+## Features
+- Management of routing for a maximum of 32 Input/Output (IO) points.
+- Handles route cycling which maps enabled source signals to enabled destination signals.
+- Supports feedback mechanisms to update system states through the EISC bridge.
+- Implements custom events for handling the enablement and value changes of routing points.
+
+## Use Case
+Typical use case involves a large count of sources with a small count of destinations. The desired amount of sources would cycle through the desired destinations.
 
 ### Plugin Configuration Object
 
@@ -93,10 +105,10 @@ The selection below documents the digital, analog, and serial joins used by the 
 | an_o (Input/Triggers) | I/O  | an_i (Feedback) |
 |-----------------------|------|-----------------|
 | Destination Route-In  | 1-32 | Destination Route-Out |
-|                       | 2    |                       |
-|                       | 3    |                       |
-|                       | 4    |                       |
-|                       | 5    |                       |
+|                       | 33   |                       |
+|                       | 34   |                       |
+|                       | 35   |                       |
+|                       | 36   |                       |
 
 #### Serials
 | serial-o (Input/Triggers) | I/O | serial-i (Feedback)  |
@@ -106,6 +118,47 @@ The selection below documents the digital, analog, and serial joins used by the 
 |                           | 3   |                      |
 |                           | 4   |                      |
 |                           | 5   |                      |
+
+# Plugin Classes
+
+### RouteCycleDevice : EssentialsBridgeableDevice
+This class is the core of the plugin and extends from the `EssentialsBridgeableDevice` class provided by the PepperDash Essentials framework.
+
+#### Properties
+- `Key`: Unique identifier for the device.
+- `Name`: Friendly name for device identification and logging.
+- `BoolValue`, `IntValue`, `StringValue`: Various types of feedback values that the device may report.
+
+#### Methods
+- `LinkToApi()`: Integrates the device with a SIMPL EISC to allow for seamless interaction and control.
+- `CycleRoute()`: Cycles through the enabled routes, updating the destinations with the selected source routes.
+- `UpdateFeedbacks()`: Updates all linked SIMPL bridge signals to reflect the current state.
+
+### CustomDeviceCollectionWithFeedback
+Represents a collection of custom devices with feedback capabilities. This class is meant to define and update input and output arrays on the EISC bridge.
+
+#### Events
+- `IndexEnabledChange`: Triggered when the index enabled state changes.
+- `OnIndexEnabledTrueChanged`, `OnIndexEnabledFalseChanged`, `OnIndexValueChanged`: Triggered to notify subscribers of specific state changes.
+
+### CustomDeviceCollection
+This class contains a simple collection consisting of an index and a route value, allowing you to manage a list of devices and their corresponding routes.
+
+### ROSBool : IDisposable
+A utility class that encapsulates a boolean value with a built-in timer to automatically reset after a specified delay.
+
+#### Events
+- `ValueChanged`: Notifies subscribers when the boolean value changes.
+
+## Usage
+Create an instance of `RouteCycleDevice` by providing a unique key and name for the device. Link the device to the API using the `LinkToApi()` method, and use the `CycleRoute()` method to initiate route cycling within the system.
+
+## Events Subscription
+The plugin supports custom event subscriptions that allow other parts of the application to respond to routing changes. For instance, a subscriber can listen for when a route is enabled (`OnIndexEnabledTrueChanged`) and perform necessary actions in response.
+
+For more information about the system architecture and for a detailed API reference, please refer to the official PepperDash Essentials documentation.
+
+---
 
 ## Github Actions
 

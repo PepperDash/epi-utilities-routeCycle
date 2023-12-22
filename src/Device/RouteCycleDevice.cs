@@ -394,6 +394,7 @@ Item Route Value = {1},
             if (_routeCycleBusy)
             {
                 Debug.Console(2, this, "CycleRoute busy, wait for it to complete before duplicate calls");
+                handleReportNotifyMessage("CycleRoute busy, wait for it to complete before duplicate calls");
                 return;
             }
             if (_customCollectionWithFeedbackBusy == null)
@@ -423,7 +424,7 @@ Item Route Value = {1},
             if (_customCollectionWithFeedbackBusy.Value)
             {
                 Debug.Console(2, this, "CycleRoute not available while sources and destination changing");
-                handleReportNotifyMessage("CycleRoute not available while sources and destination changing");
+                handleReportNotifyMessage("CycleRoute not available while sources and destinations change");
                 return;  
             }
 
@@ -480,7 +481,7 @@ Item Route Value = {1},
         }
 
         /// <summary>
-        /// Void method that updates Feedbacks which updates Bridge
+        /// Update Feedbacks and SIMPL Bridge
         /// </summary>
         private void UpdateFeedbacks()
         {
