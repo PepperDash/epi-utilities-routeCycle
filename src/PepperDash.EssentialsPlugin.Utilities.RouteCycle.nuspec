@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package >
   <metadata>
-    <id>PDT.EssentialsPluginTemplate</id>
+    <id>PDT.EssentialsPlugin.Utilities.RouteCycle</id>
     <readme>docs\README.md</readme>
-    <version>2.0.2</version>
-    <title>Essentials Plugin Template</title>
+    <version>1.0.0</version>
+    <title>epi-utilities-routecycle</title>
     <authors>PepperDash Technologies</authors>
     <owners>pepperdash</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
-    <projectUrl>https://github.com/PepperDash/EssentialsPluginTemplate</projectUrl>
-    <copyright>Copyright 2022</copyright>
-    <description>This software iserves as a template for generating new Essentials-Compliant plugins</description>
+    <projectUrl>https://github.com/PepperDash/epi-utilities-routeCycle</projectUrl>
+    <copyright>Copyright 2023</copyright>
+    <description>Cycle source to destination routes; Essentials compliant plugin</description>
     <tags>crestron 3series 4series essentials pepperdash pepperdashessentials epi essentials plugin</tags>
-    <repository type="git" url="https://github.com/PepperDash/EssentialsPluginTemplate"/>
+    <repository type="git" url="https://github.com/PepperDash/epi-utilities-routeCycle"/>
   </metadata>
     <files>
       <file src="**" target="lib\net35"/>
