@@ -35,16 +35,14 @@
   </ItemGroup>
 
   <ItemGroup>
- 	<PackageReference Include="PepperDashEssentials" Version="2.0.0" >
-  		<ExcludeAssets>runtime</ExcludeAssets>
- 	</PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove="../output\epi-make-model.4Series.1.0.0-local.cplz" />
   </ItemGroup>
 
   <ItemGroup>
     <None Remove="../output\epi-make-model.4Series.1.0.0-local.cplz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PepperDashEssentials" Version="2.4.4" />
   </ItemGroup>
 </Project>
