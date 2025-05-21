@@ -31,18 +31,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-    <None Remove="epi-make-model.projectinfo" />
+    <None Remove="epi-utilities-routeCycle.projectinfo" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="../output\epi-make-model.4Series.1.0.0-local.cplz" />
+    <None Remove="../output\epi-utilities-routeCycle.4Series.1.0.0-local.cplz" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="../output\epi-make-model.4Series.1.0.0-local.cplz" />
+    <None Remove="../output\epi-utilities-routeCycle.4Series.1.0.0-local.cplz" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="PepperDashEssentials" Version="2.4.4" />
+    <PackageReference Include="PepperDashEssentials" Version="2.4.4" >
+	<ExcludeAssets>runtime</ExcludeAssets>
   </ItemGroup>
 </Project>
