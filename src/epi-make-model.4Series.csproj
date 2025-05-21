@@ -4,7 +4,7 @@
 	</PropertyGroup>
 	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
-		<RootNamespace>epi-utilities-routecycle</RootNamespace>
+		<RootNamespace>RouteCycle.Factories</RootNamespace>
 		<Deterministic>false</Deterministic>
 		<AssemblyTitle>epi-utilities-routecycle</AssemblyTitle>
 		<Company>PepperDash Technologies</Company>
