@@ -32,8 +32,7 @@ Update the configuration object as needed for the plugin being developed.
         "uid": 0,
         "name": "Route Cycle",
         "type": "routeCycle",
-        "group": "switcher",
-        "parentDeviceKey": "processor",
+        "group": "switcher",        
         "properties": {
           "parentDeviceKey": "processor",
           "control": {
