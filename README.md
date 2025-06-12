@@ -9,13 +9,13 @@ Provided under MIT license
 This repo contains a plugin for use with [PepperDash Essentials](https://github.com/PepperDash/Essentials). 
 
 ## Overview
-The RouteCycle Device Plugin provides a solution for managing signal routing within Crestron control systems using the SIMPL# platform. This plugin allows for logic devices that do not communicate outside the program to interact with an EISC (Ethernet to Serial Control) bridge.
+The RouteCycle Device Plugin provides a solution for managing source to destination routing within Crestron control systems using the SIMPL# platform. This plugin allows for logic devices that do not communicate outside the program to interact with an EISC (Ethernet to Serial Control) bridge.
 
 ## Features
 - Management of routing for a maximum of 32 Input/Output (IO) points.
-- Handles route cycling which maps enabled source signals to enabled destination signals.
-- Supports feedback mechanisms to update system states through the EISC bridge.
-- Implements custom events for handling the enablement and value changes of routing points.
+- Handles route cycling which maps enabled sources to enabled destinations.
+- Supports feedback mechanism to update state through EISC bridge.
+- Implements custom events for handling route changes.
 
 ## Use Case
 Typical use case involves a large count of sources with a small count of destinations. The desired amount of sources would cycle through the desired destinations.
@@ -28,12 +28,11 @@ Update the configuration object as needed for the plugin being developed.
 {
 	"devices": [
 		{
-        "key": "ar-bridge-1",
+        "key": "routeCycle",
         "uid": 0,
         "name": "Route Cycle",
         "type": "routeCycle",
-        "group": "switcher",
-        "parentDeviceKey": "processor",
+        "group": "switcher",        
         "properties": {
           "parentDeviceKey": "processor",
           "control": {
@@ -61,9 +60,9 @@ Update the bridge configuration object as needed for the plugin being developed.
 {
 	"devices": [
 		{
-        "key": "autoRouteBridge",
+        "key": "routeCycle-bridge",
         "uid": 0,
-        "name": "Auto Route Bridge 1",
+        "name": "Route Cycle Bridge",
         "group": "api",
         "type": "eiscApiAdvanced",
         "properties": {
@@ -77,7 +76,7 @@ Update the bridge configuration object as needed for the plugin being developed.
           },
           "devices": [
             {
-              "deviceKey": "ar-bridge-1",
+              "deviceKey": "routeCycle",
               "joinStart": 1
             }
           ]
@@ -102,13 +101,13 @@ The selection below documents the digital, analog, and serial joins used by the 
 | DestinationSelect          | 51-82 | DestinationSelectFb  |
 
 #### Analogs
-| an_o (Input/Triggers) | I/O  | an_i (Feedback) |
-|-----------------------|------|-----------------|
-| Destination Route-In  | 1-32 | Destination Route-Out |
-|                       | 33   |                       |
-|                       | 34   |                       |
-|                       | 35   |                       |
-|                       | 36   |                       |
+| an_o (Input/Triggers) | I/O  | an_i (Feedback)            |
+|-----------------------|------|----------------------------|
+| Source Input          | 1-32 | Destination Source Request |
+|                       | 33   |                            |
+|                       | 34   |                            |
+|                       | 35   |                            |
+|                       | 36   |                            |
 
 #### Serials
 | serial-o (Input/Triggers) | I/O | serial-i (Feedback)  |

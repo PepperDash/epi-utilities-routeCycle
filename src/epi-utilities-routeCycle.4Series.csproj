@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<ProjectType>ProgramLibrary</ProjectType>
+	</PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<RootNamespace>RouteCycle.Factories</RootNamespace>
+		<Deterministic>false</Deterministic>
+		<AssemblyTitle>epi-utilities-routecycle</AssemblyTitle>
+		<Company>PepperDash Technologies</Company>
+		<Description>Cycle source to destination routes; Essentials compliant plugin</Description>
+		<Copyright>Copyright 2025</Copyright>
+		<Version>1.0.0-local</Version>
+		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+		<InformationalVersion>$(Version)</InformationalVersion>
+		<OutputPath>bin\$(Configuration)\</OutputPath>
+		<Authors>PepperDash Technologies</Authors>
+		<PackageId>PDT.EssentialsPlugin.Utilities.RouteCycle</PackageId>
+		<PackageProjectUrl>https://github.com/PepperDash/epi-utilities-routeCycle</PackageProjectUrl>
+		<PackageTags>crestron 4series essentials plugin</PackageTags>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants>$(DefineConstants);SERIES4</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Remove="Properties\**" />
+		<EmbeddedResource Remove="Properties\**" />
+		<None Remove="Properties\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+    <None Remove="epi-utilities-routeCycle.projectinfo" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="../output\epi-utilities-routeCycle.4Series.1.0.0-local.cplz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="../output\epi-utilities-routeCycle.4Series.1.0.0-local.cplz" />
+  </ItemGroup>
+
+  <ItemGroup>
+ 	<PackageReference Include="PepperDashEssentials" Version="2.4.4" >
+  		<ExcludeAssets>runtime</ExcludeAssets>
+ 	</PackageReference>
+  </ItemGroup>
+</Project>

@@ -40,7 +40,7 @@ namespace RouteCycle.Factories
             : base(key, name)
         {
             CrestronConsole.AddNewConsoleCommand(_reportDestinationFeedbacksIndexValues, "reportrcinfo", "Reports the Route Cycle Destination Feedback Index Values", ConsoleAccessLevelEnum.AccessOperator);
-            Debug.Console(0, this, "Constructing new {0} instance", name);
+            Debug.LogInformation(this, "Constructing new {0} instance", name);
             _customCollectionWithFeedbackBusy = new ROSBool(2000);
             _reportNotifyFeedback = new BoolFeedback(() => _reportNotifyMessageTrigger);
             _reportNotifyMessageFeedback = new StringFeedback(() => _reportNofityMessage);
@@ -100,8 +100,8 @@ namespace RouteCycle.Factories
             if (customJoins != null)
             { joinMap.SetCustomJoinData(customJoins); }
 
-            Debug.Console(1, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
-            Debug.Console(0, "Linking to Bridge Type {0}", GetType().Name);
+            Debug.LogDebug(this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+            Debug.LogDebug(this, "Linking to Bridge Type {0}", GetType().Name);
 
             // Device joinMap triggers and feedback
             trilist.SetBoolSigAction(joinMap.InUse.JoinNumber, (input) => { _inUse = input; });
@@ -210,10 +210,10 @@ namespace RouteCycle.Factories
                     Route = indexValue
                 });
 
-                Debug.Console(2, this, "_destinationDevice List Count = {0}", _destinationDevice.Count);
+                Debug.LogVerbose(this, "_destinationDevice List Count = {0}", _destinationDevice.Count);
                 foreach (var kvp in _destinationDevice)
                 {
-                    Debug.Console(2, this, @"
+                    Debug.LogVerbose(this, @"
 ---
 Item Index =  {0},
 Item Route Value = {1},
@@ -231,10 +231,10 @@ Item Route Value = {1},
         private void handleDestinationIndexEnabledFalseChanged(ushort index)
         {
             RemoveDeviceByIndex(_destinationDevice, index);
-            Debug.Console(2, this, "_destinationDevice List Count = {0}", _destinationDevice.Count);
+            Debug.LogVerbose(this, "_destinationDevice List Count = {0}", _destinationDevice.Count);
             foreach (var kvp in _destinationDevice)
             {
-                Debug.Console(2, this, @"
+                Debug.LogVerbose(this, @"
 ---
 Item Index =  {0},
 Item Route Value = {1},
@@ -257,11 +257,11 @@ Item Route Value = {1},
             {
                 // An item with the desired index already exists, so you might want to update it
                 existingItem.Route = indexValue;
-                Debug.Console(2, this, "Existing source w/ index: {0} found, updating w/ route value: {1}", index, indexValue);
+                Debug.LogVerbose(this, "Existing source w/ index: {0} found, updating w/ route value: {1}", index, indexValue);
             }
             else
             {
-                Debug.Console(2, this, "creating source item w/ index: {0}, and route value: {1}", index, indexValue);
+                Debug.LogVerbose(this, "creating source item w/ index: {0}, and route value: {1}", index, indexValue);
                 // No item with the desired index exists, so add a new one to the list
                 _sourceDevice.Add(new CustomDeviceCollection
                 {
@@ -269,10 +269,10 @@ Item Route Value = {1},
                     Route = indexValue
                 });
             }
-            Debug.Console(2, this, "_sourceDevice List Count = {0}", _sourceDevice.Count);
+            Debug.LogVerbose(this, "_sourceDevice List Count = {0}", _sourceDevice.Count);
             foreach(var kvp in _sourceDevice)
             {
-                Debug.Console(2, this, @"
+                Debug.LogVerbose(this, @"
 ---
 Item Index =  {0},
 Item Route Value = {1},
@@ -288,10 +288,10 @@ Item Route Value = {1},
         private void handleSourceIndexEnabledFalseChanged(ushort index)
         {
             RemoveDeviceByIndex(_sourceDevice, index);
-            Debug.Console(2, this, "_sourceDevice List Count = {0}", _sourceDevice.Count);
+            Debug.LogVerbose(this, "_sourceDevice List Count = {0}", _sourceDevice.Count);
             foreach (var kvp in _sourceDevice)
             {
-                Debug.Console(2, this, @"
+                Debug.LogVerbose(this, @"
 
 ---
 Item Index =  {0},
@@ -393,37 +393,37 @@ Item Route Value = {1},
         {
             if (_routeCycleBusy)
             {
-                Debug.Console(2, this, "CycleRoute busy, wait for it to complete before duplicate calls");
+                Debug.LogVerbose(this, "CycleRoute busy, wait for it to complete before duplicate calls");
                 handleReportNotifyMessage("CycleRoute busy, wait for it to complete before duplicate calls");
                 return;
             }
             if (_customCollectionWithFeedbackBusy == null)
             {
-                Debug.Console(2, this, "_customCollectionWithFeedbackBusy is null");
+                Debug.LogError(this, "_customCollectionWithFeedbackBusy is null");
                 return;
             }
 
             if (_sourceDevice == null)
             {
-                Debug.Console(2, this, "_sourceDevice is null");
+                Debug.LogError(this, "_sourceDevice is null");
                 return;
             }
 
             if (_destinationDevice == null)
             {
-                Debug.Console(2, this, "_destinationDevice is null");
+                Debug.LogError(this, "_destinationDevice is null");
                 return;
             }
 
             if (_destinationFeedbacks == null)
             {
-                Debug.Console(2, this, "_destinationFeedbacks is null");
+                Debug.LogError(this, "_destinationFeedbacks is null");
                 return;
             }
 
             if (_customCollectionWithFeedbackBusy.Value)
             {
-                Debug.Console(2, this, "CycleRoute not available while sources and destination changing");
+                Debug.LogVerbose(this, "CycleRoute not available while sources and destination changing");
                 handleReportNotifyMessage("CycleRoute not available while sources and destinations change");
                 return;  
             }
@@ -431,10 +431,10 @@ Item Route Value = {1},
             // Set block for toggling sources and destinations
             _routeCycleBusy = true;
 
-            Debug.Console(2, this, "--RC Triggered--");
+            Debug.LogVerbose(this, "--RC Triggered--");
             if (!_inUse)
             {
-                Debug.Console(2, this, "CycleRoute called while device InUse not set");
+                Debug.LogVerbose(this, "CycleRoute called while device InUse not set");
                 handleReportNotifyMessage("CycleRoute called while device InUse not set");
                 _routeCycleBusy = false;
                 return;
@@ -442,7 +442,7 @@ Item Route Value = {1},
 
             if (_sourceDevice.Count == 0 || _destinationDevice.Count == 0) // Source and Destination count must be greater than 0
             {
-                Debug.Console(2, this, "Source or destination count invalid while CycleRoute called. Source count = {0}, destination count = {1}.", _sourceDevice.Count, _destinationDevice.Count);
+                Debug.LogError(this, "Source or destination count invalid while CycleRoute called. Source count = {0}, destination count = {1}.", _sourceDevice.Count, _destinationDevice.Count);
                 handleReportNotifyMessage("Source or destination count invalid (both must be greater than zero) while CycleRoute called.");
                 _routeCycleBusy = false;
                 return;
@@ -450,24 +450,24 @@ Item Route Value = {1},
 
             for (int i = 0; i < _destinationDevice.Count; i++)
             {
-                Debug.Console(2, this, "---");
-                Debug.Console(2, this, "RC: i = {0}", i);
+                Debug.LogVerbose(this, "---");
+                Debug.LogVerbose(this, "RC: i = {0}", i);
                 // Ensure _targetSource is within the bounds of _sourceDevice before accessing it
                 if (_targetSource >= 0 && _targetSource < _sourceDevice.Count)
                 {
-                    Debug.Console(2, this, "RC: _targetSource = {0}", _targetSource);
-                    Debug.Console(2, this, "RC: _sourceDevice[_targetSource].Route = {0}", _sourceDevice[_targetSource].Route);
+                    Debug.LogVerbose(this, "RC: _targetSource = {0}", _targetSource);
+                    Debug.LogVerbose(this, "RC: _sourceDevice[_targetSource].Route = {0}", _sourceDevice[_targetSource].Route);
                     _destinationDevice[i].Route = _sourceDevice[_targetSource].Route;
                     var tempIndex = _destinationDevice[i].Index;
 
-                    Debug.Console(2, this, "RC: tempIndex = {0}", tempIndex);
+                    Debug.LogVerbose(this, "RC: tempIndex = {0}", tempIndex);
                     _destinationFeedbacks[tempIndex].IndexValue = _sourceDevice[_targetSource].Route;
                     _destinationFeedbacks[tempIndex].FeedbackInteger.InvokeFireUpdate();
                 }
                 else
                 {
                     // Handle the case where _targetSource is out of bounds
-                    Debug.Console(2, this, "Invalid target source index: {0}", _targetSource);
+                    Debug.LogError(this, "Invalid target source index: {0}", _targetSource);
                     handleReportNotifyMessage("Invalid target source index while CycleRoute called.");
                     // You might want to break the loop or set _targetSource to a valid index
                     break;
@@ -475,7 +475,7 @@ Item Route Value = {1},
 
                 // Increment _targetSource for the next iteration, resetting it to 0 if it exceeds the count
                 _targetSource = (_targetSource + 1) % _sourceDevice.Count;
-                Debug.Console(2, this, "RC: _targetSource incremented or reset, value = {0}", _targetSource);
+                Debug.LogVerbose(this, "RC: _targetSource incremented or reset, value = {0}", _targetSource);
             }
             _routeCycleBusy = false;
         }
@@ -500,7 +500,7 @@ Item Route Value = {1},
         /// </summary>
         private void TriggerROSBool()
         {
-            Debug.Console(2, this, "TriggerROSBool Triggered");
+            Debug.LogVerbose(this, "TriggerROSBool Triggered");
             _customCollectionWithFeedbackBusy.Value = true;
         }
 
@@ -509,7 +509,7 @@ Item Route Value = {1},
             foreach (var item in _destinationFeedbacks)
             {
                 if (item != null)
-                    Debug.Console(2, this, "All _destFdbk Index Value = {0}", item.IndexValue);
+                    Debug.LogVerbose(this, "All _destFdbk Index Value = {0}", item.IndexValue);
             }
         }
         #endregion
