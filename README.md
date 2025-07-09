@@ -22,8 +22,6 @@ Typical use case involves a large count of sources with a small count of destina
 
 ### Plugin Configuration Object
 
-Update the configuration object as needed for the plugin being developed.
-
 ```json
 {
 	"devices": [
