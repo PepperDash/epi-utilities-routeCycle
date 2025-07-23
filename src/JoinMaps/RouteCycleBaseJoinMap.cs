@@ -18,6 +18,9 @@ namespace RouteCycle.JoinMaps
 
 		// TODO [x] Add digital joins below plugin being developed
 
+		/// <summary>
+		/// Allow routes to be cycled
+		/// </summary>
 		[JoinName("inUse")]
 		public JoinDataComplete InUse = new JoinDataComplete(
 			new JoinData
@@ -32,6 +35,9 @@ namespace RouteCycle.JoinMaps
 				JoinType = eJoinType.Digital
 			});
 
+        /// <summary>
+        /// Manually cycle routes
+        /// </summary>
         [JoinName("cycleRoute")]
         public JoinDataComplete CycleRoute = new JoinDataComplete(
             new JoinData
@@ -46,6 +52,9 @@ namespace RouteCycle.JoinMaps
                 JoinType = eJoinType.Digital
             });
 
+        /// <summary>
+        /// Clear all source objects from routeCycle
+        /// </summary>
         [JoinName("sourcesClear")]
         public JoinDataComplete SourcesClear = new JoinDataComplete(
             new JoinData
@@ -60,6 +69,9 @@ namespace RouteCycle.JoinMaps
                 JoinType = eJoinType.Digital
             });
 
+        /// <summary>
+        /// Clear all destination objects from routeCycle
+        /// </summary>
         [JoinName("destinationsClear")]
         public JoinDataComplete DestinationsClear = new JoinDataComplete(
             new JoinData
@@ -74,6 +86,9 @@ namespace RouteCycle.JoinMaps
                 JoinType = eJoinType.Digital
             });
 
+        /// <summary>
+        /// Toggle to include source item in routeCycle
+        /// </summary>
         [JoinName("sourceSelect")]
         public JoinDataComplete SourceSelect = new JoinDataComplete(
             new JoinData
@@ -88,6 +103,9 @@ namespace RouteCycle.JoinMaps
                 JoinType = eJoinType.Digital
             });
 
+        /// <summary>
+        /// Toggle to include destination item in routeCycle
+        /// </summary>
         [JoinName("destinationSelect")]
         public JoinDataComplete DestinationSelect = new JoinDataComplete(
             new JoinData
@@ -104,6 +122,9 @@ namespace RouteCycle.JoinMaps
 
         // Feedback side of wrapper below
 
+        /// <summary>
+        /// Item pulses when new message is sent
+        /// </summary>
         [JoinName("reportNotifyPulse")]
         public JoinDataComplete ReportNotifyPulse = new JoinDataComplete(
             new JoinData
@@ -118,6 +139,9 @@ namespace RouteCycle.JoinMaps
                 JoinType = eJoinType.Digital
             });
 
+        /// <summary>
+        /// Feedback state of Source, when active will be included in routeCycle
+        /// </summary>
         [JoinName("sourceFeedback")]
         public JoinDataComplete SourceFeedback = new JoinDataComplete(
             new JoinData
@@ -132,6 +156,9 @@ namespace RouteCycle.JoinMaps
                 JoinType = eJoinType.Digital
             });
 
+        /// <summary>
+        /// Feedback state of Destination, when active will be included in routeCycle
+        /// </summary>
         [JoinName("destinationFeedback")]
         public JoinDataComplete DestinationFeedback = new JoinDataComplete(
             new JoinData
@@ -153,6 +180,9 @@ namespace RouteCycle.JoinMaps
 
 		// TODO [x] Add analog joins below plugin being developed
 
+        /// <summary>
+        /// Source Input Value
+        /// </summary>
         [JoinName("sourceInputValue")]
         public JoinDataComplete SourceInputValue = new JoinDataComplete(
             new JoinData
@@ -167,6 +197,9 @@ namespace RouteCycle.JoinMaps
                 JoinType = eJoinType.Analog
             });
 
+        /// <summary>
+        /// Destination Source Request Value
+        /// </summary>
         [JoinName("destinationRouteOut")]
         public JoinDataComplete DestinationRouteOut = new JoinDataComplete(
             new JoinData
@@ -188,6 +221,9 @@ namespace RouteCycle.JoinMaps
 
 		// TODO [x] Add serial joins below plugin being developed
 
+        /// <summary>
+        /// Notification Message
+        /// </summary>
         [JoinName("reportNotifyMessage")]
 		public JoinDataComplete ReportNotifyMessage = new JoinDataComplete(
 			new JoinData
