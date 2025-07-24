@@ -25,16 +25,7 @@ namespace RouteCycle.Factories
             TypeNames = new List<string>() { "routeCycle", "utilitiesRouteCycle" };
         }
         
-		/// <summary>
-        /// Builds and returns an instance of EssentialsPluginTemplateLogicDevice
-		/// </summary>
-		/// <param name="dc">device configuration</param>
-		/// <returns>plugin device or null</returns>
-		/// <remarks>		
-		/// The example provided below takes the device key, name, properties config and the comms device created.
-		/// Modify the EssetnialsPlugingDeviceTemplate constructor as needed to meet the requirements of the plugin device.
-		/// </remarks>
-		/// <seealso cref="PepperDash.Core.eControlMethod"/>
+		/// <inheritdoc/>
         public override EssentialsDevice BuildDevice(PepperDash.Essentials.Core.Config.DeviceConfig dc)
         {
 

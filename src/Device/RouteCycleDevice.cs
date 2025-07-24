@@ -35,7 +35,6 @@ namespace RouteCycle.Factories
         /// </summary>
         /// <param name="key">Device unique key</param>
         /// <param name="name">Device friendly name</param>
-        /// <param name="config">Device configuration</param>
         public RouteCycleDevice(string key, string name)
             : base(key, name)
         {
@@ -80,13 +79,7 @@ namespace RouteCycle.Factories
         }
         #region Overrides of EssentialsBridgeableDevice
 
-        /// <summary>
-        /// Links the plugin device to the EISC bridge
-        /// </summary>
-        /// <param name="trilist"></param>
-        /// <param name="joinStart"></param>
-        /// <param name="joinMapKey"></param>
-        /// <param name="bridge"></param>
+        /// <inheritdoc/>
         public override void LinkToApi(BasicTriList trilist, uint joinStart, string joinMapKey, EiscApiAdvanced bridge)
         {
             var joinMap = new RouteCycleBridgeJoinMap(joinStart);
@@ -522,14 +515,50 @@ Item Route Value = {1},
     {
         private bool _boolValue;
         private ushort _intValue;
+        
+        /// <summary>
+        /// Boolean feedback for the enabled state
+        /// </summary>
         public readonly BoolFeedback FeedbackBoolean;
+        
+        /// <summary>
+        /// Integer feedback for the index value
+        /// </summary>
         public readonly IntFeedback FeedbackInteger;
+        
+        /// <summary>
+        /// Custom event handler delegate
+        /// </summary>
         public delegate void CustomEventHandler();
+        
+        /// <summary>
+        /// Event raised when index enabled state changes
+        /// </summary>
         public event CustomEventHandler IndexEnabledChange;
+        
+        /// <summary>
+        /// Event raised when index is enabled and set to true
+        /// </summary>
         public event Action<ushort, ushort> OnIndexEnabledTrueChanged;
+        
+        /// <summary>
+        /// Event raised when index value changes
+        /// </summary>
         public event Action<ushort, ushort> OnIndexValueChanged;
+        
+        /// <summary>
+        /// Event raised when index is enabled and set to false
+        /// </summary>
         public event Action<ushort> OnIndexEnabledFalseChanged;
+        
+        /// <summary>
+        /// Gets or sets the index value
+        /// </summary>
         public ushort Index { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the enabled state of the index
+        /// </summary>
         public bool IndexEnabled 
         { 
             get 
@@ -558,6 +587,10 @@ Item Route Value = {1},
                 }
             }
         }
+        
+        /// <summary>
+        /// Gets or sets the index value for routing
+        /// </summary>
         public ushort IndexValue
         {
             get
@@ -582,7 +615,10 @@ Item Route Value = {1},
             FeedbackBoolean = new BoolFeedback(() => _boolValue);
             FeedbackInteger = new IntFeedback(() => _intValue);
         }
-        // Method to raise the event
+        
+        /// <summary>
+        /// Method to raise the IndexEnabledChange event
+        /// </summary>
         protected virtual void onIndexEnabled()
         {
             if (IndexEnabledChange != null)
@@ -611,7 +647,9 @@ Item Route Value = {1},
             GC.SuppressFinalize(this); // To prevent finalizer from running
         }
 
-        // Destructor for CustomDeviceCollectionWithFeedback
+        /// <summary>
+        /// Destructor for CustomDeviceCollectionWithFeedback
+        /// </summary>
         ~CustomDeviceCollectionWithFeedback()
         {
             Dispose();
@@ -626,11 +664,19 @@ Item Route Value = {1},
     {
         private ushort _indexValue;
         private ushort _routeValue;
+        
+        /// <summary>
+        /// Gets or sets the index value
+        /// </summary>
         public ushort Index
         {
             get { return _indexValue; }
             set { _indexValue = value; }
         }
+        
+        /// <summary>
+        /// Gets or sets the route value
+        /// </summary>
         public ushort Route
         {
             get { return _routeValue; }
@@ -647,7 +693,15 @@ Item Route Value = {1},
         private CTimer _timer;
         private object _lock = new object();  // Lock for thread synchronization
         private int _timerDelay;  // Instance field to store the timer delay
+        
+        /// <summary>
+        /// Event raised when the value changes
+        /// </summary>
         public event EventHandler<BoolEventArgs> ValueChanged;
+        
+        /// <summary>
+        /// Gets or sets the boolean value with auto-reset timer functionality
+        /// </summary>
         public bool Value
         {
             get
@@ -740,7 +794,9 @@ Item Route Value = {1},
             GC.SuppressFinalize(this); // To prevent finalizer from running
         }
 
-        // Destructor for TimedBool
+        /// <summary>
+        /// Destructor for ROSBool
+        /// </summary>
         ~ROSBool()
         {
             Dispose();
@@ -753,6 +809,9 @@ Item Route Value = {1},
     /// </summary>
     public class BoolEventArgs : EventArgs
     {
+        /// <summary>
+        /// Gets the boolean value associated with this event
+        /// </summary>
         public bool Value { get; private set; }
 
         /// <summary>
